@@ -2,13 +2,13 @@
 import router from '@/router.js'
 
 const navItems = [
-  { label: '관광지', category: '관광지' },
-  { label: '맛집', category: '맛집' },
-  { label: '축제', category: '축제·행사' },
+  { label: '홈', category: '' },
+  { label: '모두 보기', category: 'list' },
+  // { label: '식당', category: 'restaurant' },
 ]
 
-function goCategory(category) {
-  router.push({ path: '/list', query: { category } })
+function goToOtherView(category) {
+  router.push({ path: `/${category}` })
 }
 </script>
 
@@ -22,7 +22,7 @@ function goCategory(category) {
           v-for="item in navItems"
           :key="item.category"
           class="nav-link label-sm"
-          @click="goCategory(item.category)"
+          @click="goToOtherView(item.category)"
         >
           {{ item.label }}
         </button>
