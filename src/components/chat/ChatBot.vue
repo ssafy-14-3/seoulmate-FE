@@ -1,7 +1,8 @@
 <script setup>
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, onMounted, onUnmounted } from 'vue'
 import { sendChat } from '../../../api/index.js'
 
+const widgetRef = ref(null)
 const bodyRef = ref(null)
 const isLoading = ref(false)
 const isOpen = ref(false)
@@ -28,6 +29,15 @@ const toggleChat = () => {
   isOpen.value = !isOpen.value
 }
 
+const onDocumentClick = (e) => {
+  if (isOpen.value && widgetRef.value && !e.composedPath().includes(widgetRef.value)) {
+    isOpen.value = false
+  }
+}
+
+onMounted(() => document.addEventListener('click', onDocumentClick))
+onUnmounted(() => document.removeEventListener('click', onDocumentClick))
+
 const sendMessage = async () => {
   const text = input.value.trim()
   if (!text) return
@@ -43,10 +53,12 @@ const sendMessage = async () => {
   input.value = ''
 
   try {
-    const history = messages.value.map((message) => ({
-      role: message.role === 'bot' ? 'assistant' : 'user',
-      content: message.content,
-    }))
+    const history = messages.value
+      .slice(0, -1) // 방금 push한 현재 질문은 message 필드로 전달되므로 제외
+      .map((message) => ({
+        role: message.role === 'bot' ? 'assistant' : 'user',
+        content: message.content,
+      }))
 
     const response = await sendChat(text, history)
 
@@ -71,7 +83,7 @@ const sendMessage = async () => {
 </script>
 
 <template>
-  <div class="chatbot-widget">
+  <div class="chatbot-widget" ref="widgetRef">
     <Transition name="panel">
       <div
         v-if="isOpen"
