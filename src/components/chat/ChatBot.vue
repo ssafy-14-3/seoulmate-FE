@@ -1,7 +1,9 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import { sendChat } from '../../../api/index.js'
 
+const bodyRef = ref(null)
+const isLoading = ref(false)
 const isOpen = ref(false)
 const input = ref('')
 const messages = ref([
@@ -11,6 +13,16 @@ const messages = ref([
     content: '안녕하세요! 서울메이트 챗봇입니다. 무엇을 도와드릴까요?',
   },
 ])
+
+const scrollToBottom = async () => {
+  await nextTick()
+  if (bodyRef.value) {
+    bodyRef.value.scrollTo({
+      top: bodyRef.value.scrollHeight,
+      behavior: 'smooth',
+    })
+  }
+}
 
 const toggleChat = () => {
   isOpen.value = !isOpen.value
@@ -25,6 +37,8 @@ const sendMessage = async () => {
     role: 'user',
     content: text,
   })
+  isLoading.value = true
+  scrollToBottom()
 
   input.value = ''
 
@@ -39,8 +53,9 @@ const sendMessage = async () => {
     messages.value.push({
       id: Date.now() + 1,
       role: 'bot',
-      content: response?.answer || response?.content || '죄송해요. 답변을 가져오지 못했어요.',
+      content: response?.reply || '죄송해요. 답변을 가져오지 못했어요.',    
     })
+    scrollToBottom()
   } catch (error) {
     console.error('챗봇 API 호출 중 오류 발생:', error)
     messages.value.push({
@@ -48,6 +63,9 @@ const sendMessage = async () => {
       role: 'bot',
       content: '챗봇 응답을 가져오지 못했어요. 다시 시도해주세요.',
     })
+    scrollToBottom()
+  } finally {
+    isLoading.value = false
   }
 }
 </script>
@@ -72,13 +90,16 @@ const sendMessage = async () => {
           </button>
         </div>
 
-        <div class="chat-panel__body">
+          <div class="chat-panel__body" ref="bodyRef">
           <div
             v-for="message in messages"
             :key="message.id"
             :class="['bubble', message.role === 'user' ? 'bubble--user' : 'bubble--bot']"
           >
             {{ message.content }}
+          </div>
+          <div v-if="isLoading" class="bubble bubble--bot typing">
+            <span></span><span></span><span></span>
           </div>
         </div>
 
@@ -229,5 +250,20 @@ const sendMessage = async () => {
 .panel-leave-to {
   opacity: 0;
   transform: translateY(8px) scale(0.96);
+}
+
+.typing span {
+  display: inline-block;
+  width: 6px; height: 6px;
+  margin: 0 2px;
+  border-radius: 50%;
+  background: var(--color-outline-variant);
+  animation: bounce 1.2s infinite;
+}
+.typing span:nth-child(2) { animation-delay: 0.2s; }
+.typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-4px); }
 }
 </style>

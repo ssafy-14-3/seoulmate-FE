@@ -71,19 +71,18 @@ async function fetchLocation() {
 
 async function fetchReviews() {
   try {
-    const base = import.meta.env.VITE_API_BASE_URL || 'https://seoulmate-be.onrender.com'
-    const url = new URL(`${base}/api/locations/${locationId}/reviews`)
-    url.searchParams.set('page', String(page.value))
-    url.searchParams.set('size', String(size))
-
-    const res = await fetch(url.toString(), { headers: { 'Content-Type': 'application/json' } })
-    if (!res.ok) return
-    const data = await res.json()
+    const data = await getReviewList(locationId, { page: page.value, size })
     reviews.value = data.items || []
     reviewTotal.value = data.total || 0
   } catch (e) {
     /* 목록 로드 실패 시 빈 상태 유지 */
   }
+}
+
+function changePage(p) {
+  if (p < 1 || p > totalPages.value || p === page.value) return
+  page.value = p
+  fetchReviews()
 }
 
 /** 최초 진입/재시도 시 전체 로드 (로딩 Lottie 표시) */
