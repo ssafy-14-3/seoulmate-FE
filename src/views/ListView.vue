@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { fetchLocations } from '../../api'
 
 const route = useRoute()
 const router = useRouter()
@@ -9,8 +10,13 @@ const searchQuery = ref('')
 const selectedCategory = ref('전체')
 const currentPage = ref(1)
 const pageSize = 12
+const useMockData = ref(true)
 
 const places = ref([])
+const totalItems = ref(0)
+const totalPages = ref(1)
+const isLoading = ref(false)
+const errorMessage = ref('')
 
 const categoryOptions = [
   '전체',
@@ -26,296 +32,140 @@ const categoryOptions = [
 
 const featuredPlaces = computed(() => places.value.slice(0, 3))
 
+const mockLocations = [
+  {
+    id: 1,
+    category: '관광지',
+    name: '경복궁',
+    address: '서울특별시 종로구 사직로 161',
+    rating: 4.8,
+    date: '2024.05.12',
+    summary: '고궁의 밤을 거닐다',
+    image: 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=900&q=80'
+  },
+  {
+    id: 2,
+    category: '관광지',
+    name: 'N서울타워',
+    address: '서울특별시 용산구 남산공원길 105',
+    rating: 4.5,
+    date: '2024.05.10',
+    summary: '서울의 야경을 한눈에',
+    image: 'https://images.unsplash.com/photo-1520106212299-d99c443e4568?auto=format&fit=crop&w=900&q=80'
+  },
+  {
+    id: 3,
+    category: '공원',
+    name: '반포한강공원',
+    address: '서울특별시 서초구 신반포로11길 40',
+    rating: 4.9,
+    date: '2024.05.08',
+    summary: '한강의 풍경과 피크닉',
+    image: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80'
+  },
+  {
+    id: 4,
+    category: '쇼핑/전통',
+    name: '광장시장',
+    address: '서울특별시 종로구 창경궁로 88',
+    rating: 4.3,
+    date: '2024.05.05',
+    summary: '전통시장과 길거리 음식',
+    image: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=900&q=80'
+  },
+  {
+    id: 5,
+    category: '전시/미술',
+    name: 'DDP (동대문디자인플라자)',
+    address: '서울특별시 중구 을지로 281',
+    rating: 4.7,
+    date: '2024.05.01',
+    summary: '현대 건축과 전시 공간',
+    image: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=900&q=80'
+  }
+]
+
+function mapLocationItem(item) {
+  return {
+    id: item.id,
+    category: item.category,
+    name: item.name,
+    address: item.address,
+    rating: Number(item.avg_rating ?? item.rating ?? 0),
+    date: item.created_at
+      ? new Date(item.created_at).toLocaleDateString('ko-KR', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        })
+      : item.date || '',
+    summary: item.description ?? item.summary ?? '',
+    image: item.image_url || item.image || 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80'
+  }
+}
+
 watch(
   () => route.query.category,
   (category) => {
     selectedCategory.value = category || '전체'
     currentPage.value = 1
+    void loadPlaces()
   },
   { immediate: true }
 )
 
-watch([searchQuery], () => {
+watch(searchQuery, () => {
   currentPage.value = 1
 })
 
-onMounted(async () => {
-  await loadPlaces()
+onMounted(() => {
+  void loadPlaces()
 })
 
 async function loadPlaces() {
-  places.value = [
-    {
-      id: 1,
-      category: '관광지',
-      name: '경복궁',
-      address: '서울특별시 종로구 사직로 161',
-      rating: 4.8,
-      date: '2024.05.12',
-      summary: '고궁의 밤을 거닐다',
-      image: 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-      id: 2,
-      category: '관광지',
-      name: 'N서울타워',
-      address: '서울특별시 용산구 남산공원길 105',
-      rating: 4.5,
-      date: '2024.05.10',
-      summary: '서울의 야경을 한눈에',
-      image: 'https://images.unsplash.com/photo-1520106212299-d99c443e4568?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-      id: 3,
-      category: '공원',
-      name: '반포한강공원',
-      address: '서울특별시 서초구 신반포로11길 40',
-      rating: 4.9,
-      date: '2024.05.08',
-      summary: '한강의 풍경과 피크닉',
-      image: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-      id: 4,
-      category: '쇼핑/전통',
-      name: '광장시장',
-      address: '서울특별시 종로구 창경궁로 88',
-      rating: 4.3,
-      date: '2024.05.05',
-      summary: '전통시장과 길거리 음식',
-      image: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-      id: 5,
-      category: '전시/미술',
-      name: 'DDP (동대문디자인플라자)',
-      address: '서울특별시 중구 을지로 281',
-      rating: 4.7,
-      date: '2024.05.01',
-      summary: '현대 건축과 전시 공간',
-      image: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-      id: 6,
-      category: '문화유산',
-      name: '남산골 한옥마을',
-      address: '서울특별시 중구 퇴계로34길 28',
-      rating: 4.6,
-      date: '2024.04.28',
-      summary: '한옥과 서울의 역사',
-      image: 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-      id: 7,
-      category: '랜드마크',
-      name: '코엑스 별마당 도서관',
-      address: '서울특별시 강남구 영동대로 513',
-      rating: 4.9,
-      date: '2024.04.25',
-      summary: '도서관과 예술의 조화',
-      image: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-      id: 8,
-      category: '맛집',
-      name: '성수동 카페거리',
-      address: '서울특별시 성동구 성수동2가',
-      rating: 4.8,
-      date: '2024.04.20',
-      summary: '감성 가득한 로컬 카페',
-      image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-      id: 9,
-      category: '랜드마크',
-      name: '홍대 걷고싶은거리',
-      address: '서울특별시 마포구 어울마당로',
-      rating: 4.5,
-      date: '2024.04.15',
-      summary: '활기찬 거리와 문화',
-      image: 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-      id: 10,
-      category: '공원',
-      name: '여의도 한강공원',
-      address: '서울특별시 영등포구 여의동로 330',
-      rating: 4.7,
-      date: '2024.04.10',
-      summary: '도심 속 자연 휴식',
-      image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-      id: 11,
-      category: '축제·행사',
-      name: '서울라이트 뮤직 페스티벌',
-      address: '서울특별시 송파구 올림픽로 424',
-      rating: 4.4,
-      date: '2024.04.08',
-      summary: '도심 속 야간 음악 축제',
-      image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-      id: 12,
-      category: '맛집',
-      name: '이태원 퓨전 음식거리',
-      address: '서울특별시 용산구 이태원로 217',
-      rating: 4.6,
-      date: '2024.04.05',
-      summary: '다양한 맛의 밤거리',
-      image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-      id: 13,
-      category: '전시/미술',
-      name: '국립현대미술관',
-      address: '서울특별시 종로구 삼청로 30',
-      rating: 4.7,
-      date: '2024.03.30',
-      summary: '현대 미술의 감각을 만나다',
-      image: 'https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-      id: 14,
-      category: '관광지',
-      name: '창덕궁',
-      address: '서울특별시 종로구 율곡로 99',
-      rating: 4.8,
-      date: '2024.03.28',
-      summary: '자연과 궁궐의 조화',
-      image: 'https://images.unsplash.com/photo-1526481280693-3bfa7568e0f3?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-      id: 15,
-      category: '공원',
-      name: '북서울꿈의숲',
-      address: '서울특별시 강북구 월계로 173',
-      rating: 4.5,
-      date: '2024.03.24',
-      summary: '산책과 힐링의 공간',
-      image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-      id: 16,
-      category: '문화유산',
-      name: '석촌호수 문화공원',
-      address: '서울특별시 송파구 석촌호수로 188',
-      rating: 4.4,
-      date: '2024.03.20',
-      summary: '호수와 문화의 공존',
-      image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-      id: 17,
-      category: '쇼핑/전통',
-      name: '이수재래시장',
-      address: '서울특별시 동작구 이수로 123',
-      rating: 4.2,
-      date: '2024.03.18',
-      summary: '전통시장과 로컬 먹거리',
-      image: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-      id: 18,
-      category: '축제·행사',
-      name: '서울문화재단 야간행사',
-      address: '서울특별시 중구 세종대로 110',
-      rating: 4.3,
-      date: '2024.03.15',
-      summary: '밤을 즐기는 문화 이벤트',
-      image: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-      id: 19,
-      category: '랜드마크',
-      name: '청계천 산책로',
-      address: '서울특별시 종로구 청계천로 1',
-      rating: 4.6,
-      date: '2024.03.12',
-      summary: '도심 속 산책과 휴식',
-      image: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-      id: 20,
-      category: '관광지',
-      name: '덕수궁',
-      address: '서울특별시 중구 세종대로 99',
-      rating: 4.7,
-      date: '2024.03.10',
-      summary: '서울의 역사와 풍경',
-      image: 'https://images.unsplash.com/photo-1526481280693-3bfa7568e0f3?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-      id: 21,
-      category: '맛집',
-      name: '망원동 맛집 스트리트',
-      address: '서울특별시 마포구 망원로 1',
-      rating: 4.5,
-      date: '2024.03.08',
-      summary: '로컬 맛집과 브런치',
-      image: 'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-      id: 22,
-      category: '전시/미술',
-      name: '서울시립미술관',
-      address: '서울특별시 성동구 왕십리로 136',
-      rating: 4.4,
-      date: '2024.03.05',
-      summary: '작품과 함께하는 여유',
-      image: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-      id: 23,
-      category: '공원',
-      name: '월드컵공원',
-      address: '서울특별시 마포구 성산동 400',
-      rating: 4.8,
-      date: '2024.03.02',
-      summary: '넓은 공원과 산책 코스',
-      image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-      id: 24,
-      category: '관광지',
-      name: '서울숲',
-      address: '서울특별시 성동구 뚝섬로 273',
-      rating: 4.7,
-      date: '2024.02.29',
-      summary: '도심 속 녹지와 산책',
-      image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-      id: 25,
-      category: '축제·행사',
-      name: '한강 밤도깨비 야시장',
-      address: '서울특별시 영등포구 여의동로 330',
-      rating: 4.6,
-      date: '2024.02.25',
-      summary: '밤의 야시장과 먹거리',
-      image: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80'
+  isLoading.value = true
+  errorMessage.value = ''
+
+  try {
+    if (useMockData.value) {
+      const filtered = mockLocations.filter((item) => {
+        const matchesCategory = selectedCategory.value === '전체' || item.category === selectedCategory.value
+        const query = searchQuery.value.trim().toLowerCase()
+        const searchableText = `${item.name} ${item.category} ${item.address} ${item.summary}`.toLowerCase()
+        const matchesSearch = !query || searchableText.includes(query)
+        return matchesCategory && matchesSearch
+      })
+
+      const start = (currentPage.value - 1) * pageSize
+      const pageItems = filtered.slice(start, start + pageSize)
+
+      places.value = pageItems.map(mapLocationItem)
+      totalItems.value = filtered.length
+      totalPages.value = Math.max(1, Math.ceil(totalItems.value / pageSize))
+      return
     }
-  ]
+
+    const response = await fetchLocations({
+      category: selectedCategory.value === '전체' ? undefined : selectedCategory.value,
+      q: searchQuery.value.trim() || undefined,
+      page: currentPage.value,
+      size: pageSize
+    })
+
+    places.value = (response?.items || []).map(mapLocationItem)
+    totalItems.value = Number(response?.total || places.value.length || 0)
+    totalPages.value = Math.max(1, Math.ceil(totalItems.value / pageSize))
+  } catch (error) {
+    places.value = []
+    totalItems.value = 0
+    totalPages.value = 1
+    errorMessage.value = error?.message || '목록을 불러오지 못했습니다.'
+  } finally {
+    isLoading.value = false
+  }
 }
 
-const filteredPlaces = computed(() => {
-  const query = searchQuery.value.trim().toLowerCase()
-
-  return places.value.filter((item) => {
-    const matchesCategory = selectedCategory.value === '전체' || item.category === selectedCategory.value
-    const searchableText = `${item.name} ${item.category} ${item.address} ${item.summary}`.toLowerCase()
-    const matchesSearch = !query || searchableText.includes(query)
-
-    return matchesCategory && matchesSearch
-  })
-})
-
-const totalPages = computed(() => Math.max(1, Math.ceil(filteredPlaces.value.length / pageSize)))
-
-const pagedPlaces = computed(() => {
-  const start = (currentPage.value - 1) * pageSize
-  return filteredPlaces.value.slice(start, start + pageSize)
-})
+const pagedPlaces = computed(() => places.value)
 
 const pageNumbers = computed(() => {
   const pages = []
@@ -325,7 +175,7 @@ const pageNumbers = computed(() => {
   return pages
 })
 
-function selectCategory(category) {
+async function selectCategory(category) {
   selectedCategory.value = category
   currentPage.value = 1
 
@@ -334,10 +184,13 @@ function selectCategory(category) {
   } else {
     router.replace({ path: '/list', query: { category } })
   }
+
+  await loadPlaces()
 }
 
 function onSearch() {
   currentPage.value = 1
+  void loadPlaces()
 }
 
 function goDetail(id) {
@@ -347,6 +200,7 @@ function goDetail(id) {
 function goPage(page) {
   if (page < 1 || page > totalPages.value) return
   currentPage.value = page
+  void loadPlaces()
 }
 </script>
 
@@ -355,6 +209,15 @@ function goPage(page) {
     <div class="container list-shell">
 
       <div class="search-panel">
+        <div class="mode-toggle">
+          <button type="button" class="mode-button" :class="{ active: useMockData }" @click="useMockData = true">
+            Fixture Mock
+          </button>
+          <button type="button" class="mode-button" :class="{ active: !useMockData }" @click="useMockData = false">
+            API
+          </button>
+        </div>
+
         <div class="search-box">
           <span class="material-symbols-outlined search-icon">search</span>
           <input
@@ -394,7 +257,10 @@ function goPage(page) {
 
         <div class="table-panel">
           <div class="table-wrapper">
-            <table>
+            <p v-if="isLoading" class="table-state">목록을 불러오는 중입니다...</p>
+            <p v-else-if="errorMessage" class="table-state error">{{ errorMessage }}</p>
+            <p v-else-if="places.length === 0" class="table-state">표시할 장소가 없습니다.</p>
+            <table v-else>
               <thead>
                 <tr>
                   <th>번호</th>
@@ -526,7 +392,25 @@ function goPage(page) {
   border: 1px solid rgba(37, 99, 235, 0.12);
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04);
 }
+.mode-toggle {
+  display: flex;
+  gap: 8px;
+}
 
+.mode-button {
+  border: 1px solid #dbeafe;
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: #f8fbff;
+  color: #475569;
+  cursor: pointer;
+}
+
+.mode-button.active {
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  color: white;
+  border-color: transparent;
+}
 .search-box {
   display: flex;
   align-items: center;
@@ -707,6 +591,16 @@ table {
   width: 100%;
   border-collapse: collapse;
   background: white;
+}
+
+.table-state {
+  padding: 24px 0;
+  color: #64748b;
+  text-align: center;
+}
+
+.table-state.error {
+  color: #b91c1c;
 }
 
 th,
