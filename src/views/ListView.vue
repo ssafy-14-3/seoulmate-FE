@@ -8,7 +8,7 @@ const router = useRouter()
 const searchQuery = ref('')
 const selectedCategory = ref('전체')
 const currentPage = ref(1)
-const pageSize = 13
+const pageSize = 12
 
 const places = ref([])
 
@@ -382,17 +382,13 @@ function goPage(page) {
 
       <div class="content-grid">
         <aside class="feature-panel">
-          <div class="panel-title-row">
-            <h2 class="headline-md">이달의 추천</h2>
-          </div>
-
-          <div v-for="place in featuredPlaces" :key="place.id" class="feature-card">
-            <img :src="place.image" :alt="place.name" />
-            <div class="feature-card-body">
-              <p class="label-sm feature-tag">{{ place.category }}</p>
-              <h3 class="headline-md">{{ place.name }}</h3>
-              <p class="body-md">{{ place.summary }}</p>
+          <div v-for="place in featuredPlaces" :key="place.id" class="feature-card" @click="goDetail(place.id)">
+            <div class="feature-card-overlay">
+              <p class="feature-card-tag">이달의 추천</p>
+              <h4 class="feature-card-title">{{ place.name }}</h4>
+              <p class="feature-card-summary">{{ place.summary }}</p>
             </div>
+            <img :src="place.image" :alt="place.name" class="feature-card-image" />
           </div>
         </aside>
 
@@ -599,7 +595,6 @@ function goPage(page) {
   }
 }
 
-.feature-panel,
 .table-panel {
   border-radius: 24px;
   background: rgba(255, 255, 255, 0.9);
@@ -608,10 +603,13 @@ function goPage(page) {
 }
 
 .feature-panel {
-  padding: 18px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 24px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
 }
 
 .panel-title-row,
@@ -632,34 +630,67 @@ function goPage(page) {
 }
 
 .feature-card {
+  position: relative;
   overflow: hidden;
-  border-radius: 18px;
-  border: 1px solid #e2e8f0;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 12px;
+  height: 256px;
+  border: 1px solid #c3c6d7;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .feature-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.12);
+  opacity: 0.9;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.16);
 }
 
-.feature-card img {
+.feature-card-image {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  height: 140px;
+  height: 100%;
   object-fit: cover;
+  transition: transform 0.5s ease;
+  z-index: 1;
 }
 
-.feature-card-body {
-  padding: 14px;
+.feature-card:hover .feature-card-image {
+  transform: scale(1.05);
+}
+
+.feature-card-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0) 100%);
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  justify-content: flex-end;
 }
 
-.feature-tag {
-  color: #2563eb;
+.feature-card-tag {
+  color: #ffffff;
+  font-size: 12px;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+  opacity: 0.9;
+}
+
+.feature-card-title {
+  color: #ffffff;
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.feature-card-summary {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  margin: 0;
 }
 
 .table-panel {
@@ -721,6 +752,10 @@ tbody tr:hover {
   gap: 4px;
   color: #2563eb;
   font-weight: 700;
+}
+
+.rating .material-symbols-outlined {
+  color: #f59e0b;
 }
 
 .pagination {
