@@ -7,9 +7,7 @@ const props = defineProps({
 })
 
 const searchQuery = ref('')
-const selectedPlace = ref(
-  props.initialReview?.selectedPlace ?? { id: 1, name: '경복궁', category: '관광지' }
-)
+const selectedPlace = ref(props.initialReview?.selectedPlace ?? null)
 
 const title = ref(props.initialReview?.title ?? '')
 const rating = ref(props.initialReview?.rating ?? '5')
@@ -126,8 +124,8 @@ async function handleSubmit() {
             <div v-if="selectedPlace" class="selected-place-preview">
               <div class="place-info">
                 <span class="material-symbols-outlined location-icon">location_on</span>
-                <span class="body-md font-medium">{{ selectedPlace.name }}</span>
-                <span class="label-sm text-sub">| #{{ selectedPlace.category }}</span>
+                <span class="body-md font-medium">{{ selectedPlace.name || ('장소 #' + selectedPlace.id) }}</span>
+                <span v-if="selectedPlace.category" class="label-sm text-sub">| #{{ selectedPlace.category }}</span>
               </div>
               <button class="btn-clear" type="button" @click="clearSelectedPlace">
                 <span class="material-symbols-outlined icon-close">close</span>

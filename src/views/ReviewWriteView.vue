@@ -10,8 +10,6 @@ const initialReview = computed(() => {
   return {
     selectedPlace: {
       id: Number(q.locationId),
-      name: q.locationName ?? '',
-      category: q.category ?? '',
     },
   }
 })

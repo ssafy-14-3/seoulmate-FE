@@ -212,8 +212,6 @@ function goToReview(place) {
     path: '/review/write',
     query: {
       locationId: String(place.id),
-      locationName: place.name,
-      category: place.category,
     },
   })
 }
