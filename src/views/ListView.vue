@@ -739,11 +739,15 @@ tbody tr:hover {
 
 .pill {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 4px 10px;
   border-radius: 999px;
   background: linear-gradient(135deg, #dbeafe, #e0f2fe);
   color: #1d4ed8;
   font-size: 0.82rem;
+  white-space: nowrap;
+  line-height: 1.2;
 }
 
 .rating {
