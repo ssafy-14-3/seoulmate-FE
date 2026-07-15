@@ -298,7 +298,6 @@ function goPage(page) {
                   <th>장소명</th>
                   <th>주소</th>
                   <th>평균별점</th>
-                  <th>작성일</th>
                 </tr>
               </thead>
               <tbody>
@@ -315,7 +314,6 @@ function goPage(page) {
                       {{ place.rating.toFixed(1) }}
                     </span>
                   </td>
-                  <td>{{ place.date }}</td>
                 </tr>
               </tbody>
             </table>
