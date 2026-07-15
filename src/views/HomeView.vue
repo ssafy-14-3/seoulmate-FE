@@ -144,15 +144,8 @@ function goCategory(category) {
           <h4 class="headline-md review-title">{{ review.title }}</h4>
           <p class="body-md review-content">{{ review.content }}</p>
 
-          <div class="review-stars">
-            <span
-              v-for="n in 5"
-              :key="n"
-              class="material-symbols-outlined star"
-              :class="{ filled: n <= review.rating, 'star-on': n <= review.rating }"
-            >
-              star
-            </span>
+          <div class="stars small" aria-label="`별점 ${review.rating}점`">
+            <span v-for="n in 5" :key="n" :class="['star', { filled: n <= review.rating }]">★</span>
           </div>
         </button>
       </div>
@@ -469,13 +462,27 @@ function goCategory(category) {
   gap: 2px;
 }
 
-.star {
-  font-size: 18px;
-  color: var(--color-outline-variant);
+.stars {
+  display: flex;
+  margin: 8px 0;
 }
-
-.star-on {
-  color: var(--color-star);
+.star {
+  color: #e1e3e4; /* DetailView의 --surface-variant와 동일 */
+  font-size: 20px;
+  line-height: 1;
+}
+.star.filled {
+  color: #fbbf24; /* DetailView의 --amber와 동일 */
+}
+.stars.small .star {
+  font-size: 16px;
+}
+.stars.pick .star {
+  font-size: 28px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 2px;
 }
 
 .review-empty {
