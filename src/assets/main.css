@@ -1,8 +1,30 @@
 @import './base.css';
 
-/* ---------- 레이아웃 ---------- */
-.container {
+/* ---------- 기본 레이아웃 ---------- */
+:root {
+  color: var(--color-on-surface);
+  background: var(--color-surface);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+  min-height: 100vh;
   width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  display: block;
+  margin: 0;
+  background: var(--color-surface);
+}
+
+.container {
+  width: min(1200px, calc(100% - 32px));
   max-width: var(--container-max);
   margin: 0 auto;
   padding: 0 var(--margin-mobile);
@@ -122,4 +144,13 @@
   direction: ltr;
   user-select: none;
   -webkit-font-smoothing: antialiased;
+}
+
+a {
+  text-decoration: none;
+}
+
+button,
+input {
+  font: inherit;
 }
