@@ -257,7 +257,11 @@ async function handleSubmit() {
 
           <div class="action-section">
               <div class="form-group pw-group">
-                <label for="password" class="label-sm form-label">수정용 비밀번호</label>
+                <template v-if="isEditMode">
+                  <input type="hidden" id="password" name="password" :value="password" />
+                </template>
+                <template v-else>
+                  <label for="password" class="label-sm form-label">수정용 비밀번호</label>
                   <input
                     id="password"
                     v-model="password"
@@ -266,10 +270,10 @@ async function handleSubmit() {
                     placeholder="비밀번호 입력"
                     required
                   />
-                  <p v-if="!isEditMode" class="pw-tip">
+                  <p class="pw-tip">
                     ※ 게시글 수정/삭제 시 확인용으로 사용됩니다 (평문 저장)
                   </p>
-                  <div v-else class="label-sm">비밀번호가 자동 입력되어 있습니다. 필요 시 변경 후 저장해 주세요.</div>
+                </template>
               </div>
 
             <div class="btn-group">
