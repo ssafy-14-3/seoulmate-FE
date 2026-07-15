@@ -87,7 +87,11 @@ function goCategory(category) {
 }
 
 function goList() {
-  router.push('/locations')
+  router.push('/list')
+}
+
+function goWriteReview() {
+  router.push('/review/write')
 }
 
 function goDetail(locationId) {
@@ -110,7 +114,7 @@ function goDetail(locationId) {
       </p>
       <div class="hero-actions">
         <button class="btn btn-primary" @click="goList">정보 찾기</button>
-        <button class="btn btn-outline" @click="goList">리뷰 작성하기</button>
+        <button class="btn btn-outline" @click="goWriteReview">리뷰 작성하기</button>
       </div>
     </div>
 

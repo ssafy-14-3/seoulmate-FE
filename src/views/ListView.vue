@@ -207,6 +207,17 @@ function goDetail(id) {
   router.push(`/detail/${id}`)
 }
 
+function goToReview(place) {
+  router.push({
+    path: '/review/write',
+    query: {
+      locationId: String(place.id),
+      locationName: place.name,
+      category: place.category,
+    },
+  })
+}
+
 function goPage(page) {
   if (page < 1 || page > totalPages.value) return
   currentPage.value = page
@@ -296,7 +307,7 @@ function goPage(page) {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="place in pagedPlaces" :key="place.id" @click="goDetail(place.id)">
+                <tr v-for="place in pagedPlaces" :key="place.id" @click="goToReview(place)">
                   <td>{{ String(place.id).padStart(2, '0') }}</td>
                   <td>
                     <span class="pill">{{ place.category }}</span>
