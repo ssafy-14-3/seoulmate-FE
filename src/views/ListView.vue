@@ -765,16 +765,34 @@ tbody tr:hover {
   gap: 8px;
   padding: 16px 18px 18px;
   margin-top: 0;
+  flex-wrap: wrap;
 }
 
 .pagination button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
   border: 0;
   border-radius: 999px;
   width: 40px;
   height: 40px;
+  min-width: 40px;
+  padding: 0;
   background: #f8fbff;
   color: #334155;
   cursor: pointer;
+  font: inherit;
+  line-height: 1;
+}
+
+.pagination .page-number {
+  width: auto;
+  min-width: 40px;
+  padding: 0 12px;
+}
+
+.pagination .material-symbols-outlined {
+  font-size: 20px;
 }
 
 .pagination button.active {
