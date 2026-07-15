@@ -1,6 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import router from '@/router.js'
+import StatusLottie from '@/components/StatusLottie.vue'
+import { getRecentReviews } from '../../api/index.js'
 
 const categories = [
   {
@@ -10,70 +12,38 @@ const categories = [
     category: '관광지',
   },
   {
-    label: '맛집',
-    icon: 'restaurant',
-    desc: '현지인이 추천하는 숨겨진 골목 식당과 카페.',
-    category: '맛집',
+    label: '여행코스',
+    icon: 'map',
+    desc: '서울의 숨은 명소를 따라 떠나는 여행 코스 추천.',
+    category: '여행코스',
   },
   {
     label: '축제·행사',
     icon: 'event',
     desc: '지금 이 순간, 서울에서 열리는 활기찬 축제 소식.',
-    category: '축제·행사',
+    category: '축제공연행사',
   },
 ]
 
 const recentReviews = ref([])
+const reviewStatus = ref('loading')
 
-onMounted(async () => {
-  // TODO(백엔드): 홈 화면용 "최근 리뷰 전체" 엔드포인트 필요.
-  // 설계문서에는 장소별 리뷰(GET /api/locations/{id}/reviews)만 있으므로
-  // GET /api/reviews/recent 를 추가하거나 팀 결정에 맞게 수정할 것.
-  //
-  // 준비되면 아래 주석 해제:
-  // import { ... } from '@/api' 후
-  // const data = await fetchRecentReviews({ size: 4 })
-  // recentReviews.value = data.items
+async function loadRecentReviews() {
+  reviewStatus.value = 'loading'
 
-  // 백엔드 준비 전 화면 확인용 목데이터
-  recentReviews.value = [
-    {
-      id: 1,
-      title: '경복궁 야간 개장 다녀왔어요!',
-      content:
-        '밤에 보는 경복궁은 정말 환상적입니다. 조명이 비친 경회루의 모습은 잊을 수 없을 정도로 아름다웠어요. 미리 예매하시는 걸 추천합니다.',
-      rating: 5,
-      created_at: '2026-07-12T10:00:00',
-      location_id: 1,
-    },
-    {
-      id: 2,
-      title: '성수동 골목 카페 추천',
-      content:
-        '인더스트리얼한 분위기가 너무 멋진 곳이었어요. 시그니처 라떼가 정말 고소하고 맛있습니다. 주말엔 대기가 좀 길긴 하지만 기다릴만해요.',
-      rating: 4,
-      created_at: '2026-07-11T15:30:00',
-      location_id: 2,
-    },
-    {
-      id: 3,
-      title: '반포 한강공원 피크닉',
-      content:
-        '요즘 날씨에 딱이에요! 무지개 분수 시간 맞춰서 가면 분위기 최고입니다. 돗자리 펴고 치킨 시켜 먹기 너무 좋은 장소에요.',
-      rating: 5,
-      created_at: '2026-07-10T18:20:00',
-      location_id: 3,
-    },
-    {
-      id: 4,
-      title: '명동 칼국수 본점 방문기',
-      content:
-        '오랜만에 찾았는데 여전히 맛이 그대로네요. 겉절이 김치가 정말 맵지만 중독성 있습니다. 비빔 국수도 꼭 같이 드셔보시길 추천드려요.',
-      rating: 4,
-      created_at: '2026-07-09T12:00:00',
-      location_id: 4,
-    },
-  ]
+  try {
+    const res = await getRecentReviews()
+    recentReviews.value = res.items || []
+
+    reviewStatus.value = recentReviews.value.length ? 'success' : 'empty'
+  } catch (err) {
+    console.error(err)
+    reviewStatus.value = 'error'
+  }
+}
+
+onMounted(() => {
+  loadRecentReviews()
 })
 
 function formatDate(iso) {
@@ -91,6 +61,10 @@ function goList() {
 
 function goDetail(locationId) {
   router.push(`/detail/${locationId}`)
+}
+
+function goCategory(category) {
+  router.push(`/list?category=${category}`)
 }
 </script>
 
@@ -126,7 +100,7 @@ function goDetail(locationId) {
           v-for="cat in categories"
           :key="cat.category"
           class="category-card"
-          @click="goList(cat.category)"
+          @click="goCategory(cat.category)"
         >
           <div class="category-icon">
             <span class="material-symbols-outlined">{{ cat.icon }}</span>
@@ -150,13 +124,9 @@ function goDetail(locationId) {
           <h2 class="headline-lg reviews-title">최근 사용자 리뷰</h2>
           <p class="body-md reviews-sub">서울메이트 친구들이 공유한 생생한 후기를 확인하세요.</p>
         </div>
-        <button class="reviews-more label-sm" @click="goList">
-          전체보기
-          <span class="material-symbols-outlined more-icon">add</span>
-        </button>
       </div>
 
-      <div class="review-grid">
+      <div v-if="recentReviews.length" class="review-grid">
         <button
           v-for="review in recentReviews"
           :key="review.id"
@@ -185,6 +155,14 @@ function goDetail(locationId) {
             </span>
           </div>
         </button>
+      </div>
+
+      <div v-else class="review-empty">
+        <StatusLottie
+          type="error"
+          :message="reviewStatus === 'error' ? '리뷰를 불러오지 못했어요' : '리뷰가 아직 없어요'"
+          @retry="loadRecentReviews"
+        />
       </div>
     </div>
   </section>
@@ -498,5 +476,18 @@ function goDetail(locationId) {
 
 .star-on {
   color: var(--color-star);
+}
+
+.review-empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 24px 0;
+}
+
+.review-empty :deep(.status-wrap) {
+  min-height: auto;
+  padding: 0;
 }
 </style>
