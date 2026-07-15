@@ -185,6 +185,12 @@ const pageNumbers = computed(() => {
   return pages
 })
 
+async function setUseMock(value) {
+  useMockData.value = value
+  currentPage.value = 1
+  await loadPlaces()
+}
+
 async function selectCategory(category) {
   selectedCategory.value = category
   currentPage.value = 1
@@ -219,22 +225,22 @@ function goPage(page) {
     <div class="container list-shell">
       <div class="search-panel">
         <div class="mode-toggle">
-          <button
-            type="button"
-            class="mode-button"
-            :class="{ active: useMockData }"
-            @click="useMockData = true"
-          >
-            Fixture Mock
-          </button>
-          <button
-            type="button"
-            class="mode-button"
-            :class="{ active: !useMockData }"
-            @click="useMockData = false"
-          >
-            API
-          </button>
+                <button
+                  type="button"
+                  class="mode-button"
+                  :class="{ active: useMockData }"
+                  @click="setUseMock(true)"
+                >
+                  Fixture Mock
+                </button>
+                <button
+                  type="button"
+                  class="mode-button"
+                  :class="{ active: !useMockData }"
+                  @click="setUseMock(false)"
+                >
+                  API
+                </button>
         </div>
 
         <div class="search-box">
