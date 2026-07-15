@@ -138,10 +138,7 @@ async function confirmPassword() {
       await Promise.all([fetchReviews(), fetchLocation()])
     } else {
       // 수정은 verify로 사전 확인 후 수정 모달 진입
-      await api(`/api/reviews/${passwordModal.reviewId}/verify`, {
-        method: 'POST',
-        body: JSON.stringify({ password: passwordModal.value }),
-      })
+      await checkReviewPassword(passwordModal.reviewId, passwordModal.value)
       const target = reviews.value.find((r) => r.id === passwordModal.reviewId)
       Object.assign(formModal, {
         open: true,

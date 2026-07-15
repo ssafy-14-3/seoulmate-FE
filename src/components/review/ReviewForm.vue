@@ -1,7 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import router from '@/router.js'
-import { getLocationList } from '../../../api'
+import { getLocationList, postReview } from '../../../api'
 
 const props = defineProps({
   initialReview: { type: Object, default: null }
@@ -117,21 +117,23 @@ async function handleSubmit() {
 
   try {
     isSubmitting.value = true
-    // TODO: 백엔드 API 연동 시 아래 주석을 해제하여 사용하세요.
-    /*
-    const payload = {
-      location_id: selectedPlace.value.id,
-      title: title.value,
-      rating: parseInt(rating.value),
-      content: content.value,
-      password: password.value
+    if (useMockData.value) {
+      await new Promise((resolve) => setTimeout(resolve, 800))
+      alert('리뷰가 성공적으로 등록되었습니다. (모드: Mock)')
+      router.push(`/detail/${selectedPlace.value.id}`)
+      return
     }
-    await createReview(payload)
-    */
 
-    await new Promise((resolve) => setTimeout(resolve, 800))
+    const payload = {
+      title: title.value,
+      content: content.value,
+      rating: parseInt(rating.value, 10),
+      password: password.value,
+    }
+
+    await postReview(selectedPlace.value.id, payload)
     alert('리뷰가 성공적으로 등록되었습니다.')
-    router.push('/locations')
+    router.push(`/detail/${selectedPlace.value.id}`)
   } catch (error) {
     console.error(error)
     alert('리뷰 등록 중 오류가 발생했습니다.')

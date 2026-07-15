@@ -1,7 +1,7 @@
 // 설계문서(DB/API 설계서) 기준 API 모듈 — 추가 패키지 없이 fetch 사용
 // 배포 시 .env 에 VITE_API_BASE_URL=https://<render-url> 지정
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://seoulmate-be.onrender.com'
 
 const request = async (path, { method = 'GET', params, body } = {}) => {
   const url = new URL(BASE_URL + path)
