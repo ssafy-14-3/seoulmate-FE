@@ -81,7 +81,6 @@ function formatDate(iso) {
   return `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
 }
 
-
 function goCategory(category) {
   router.push({ path: '/locations', query: { category } })
 }
@@ -91,7 +90,7 @@ function goList() {
 }
 
 function goDetail(locationId) {
-  router.push(`/locations/${locationId}`)
+  router.push(`/detail/${locationId}`)
 }
 </script>
 
@@ -162,7 +161,7 @@ function goDetail(locationId) {
           v-for="review in recentReviews"
           :key="review.id"
           class="review-card"
-          @click="goDetail(review.location_id)"
+          @click="goDetail(review.id)"
         >
           <div class="review-meta">
             <div class="avatar">
