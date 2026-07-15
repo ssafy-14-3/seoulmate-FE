@@ -136,21 +136,22 @@ async function confirmPassword() {
       if (reviews.value.length === 1 && page.value > 1) page.value -= 1
       await Promise.all([fetchReviews(), fetchLocation()])
     } else {
-      // 수정은 verify로 사전 확인 후 수정 모달 진입
+      // 수정은 verify로 사전 확인 후 수정 페이지로 라우팅
       await checkReviewPassword(passwordModal.reviewId, passwordModal.value)
       const target = reviews.value.find((r) => r.id === passwordModal.reviewId)
-      Object.assign(formModal, {
-        open: true,
-        mode: 'edit',
+      const payload = {
         reviewId: passwordModal.reviewId,
+        selectedPlace: { id: Number(locationId), name: location.value?.name, category: location.value?.category },
         title: target?.title ?? '',
         content: target?.content ?? '',
         rating: target?.rating ?? 5,
-        password: '',
         verifiedPassword: passwordModal.value,
-        error: '',
-      })
+      }
+      try {
+        sessionStorage.setItem(`review_edit_${passwordModal.reviewId}`, JSON.stringify(payload))
+      } catch {}
       closePasswordModal()
+      router.push(`/review/edit/${passwordModal.reviewId}`)
     }
   } catch (e) {
     passwordModal.error =

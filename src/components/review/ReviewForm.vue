@@ -1,8 +1,8 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import router from '@/router.js'
-import { getLocationList, postReview, getLocationDetail } from '../../../api'
+import { getLocationList, postReview, getLocationDetail, updateReview } from '../../../api'
 
 const props = defineProps({
   initialReview: { type: Object, default: null }
@@ -62,6 +62,7 @@ const title = ref(props.initialReview?.title ?? '')
 const rating = ref(props.initialReview?.rating ?? '5')
 const content = ref(props.initialReview?.content ?? '')
 const password = ref(props.initialReview?.password ?? '')
+const isEditMode = computed(() => !!(props.initialReview && props.initialReview.reviewId))
 const isSubmitting = ref(false)
 
 watch(() => props.initialReview, (v) => {
@@ -142,19 +143,32 @@ async function handleSubmit() {
     isSubmitting.value = true
     if (useMockData.value) {
       await new Promise((resolve) => setTimeout(resolve, 800))
-      alert('리뷰가 성공적으로 등록되었습니다. (모드: Mock)')
+      alert(isEditMode.value ? '리뷰가 성공적으로 수정되었습니다. (모드: Mock)' : '리뷰가 성공적으로 등록되었습니다. (모드: Mock)')
+      // on edit, clear session storage
+      if (isEditMode.value) {
+        try { sessionStorage.removeItem(`review_edit_${props.initialReview.reviewId}`) } catch {}
+      }
       router.push(`/detail/${selectedPlace.value.id}`)
       return
     }
-
     const payload = {
       title: title.value,
       content: content.value,
       rating: parseInt(rating.value, 10),
-      password: password.value,
     }
 
-    await postReview(selectedPlace.value.id, payload)
+    if (isEditMode.value) {
+      const reviewId = props.initialReview.reviewId
+      const pw = props.initialReview.verifiedPassword || password.value
+      await updateReview(reviewId, { ...payload, password: pw })
+      try { sessionStorage.removeItem(`review_edit_${reviewId}`) } catch {}
+      alert('리뷰가 성공적으로 수정되었습니다.')
+      router.push(`/detail/${selectedPlace.value.id}`)
+      return
+    }
+
+    // create
+    await postReview(selectedPlace.value.id, { ...payload, password: password.value })
     alert('리뷰가 성공적으로 등록되었습니다.')
     router.push(`/detail/${selectedPlace.value.id}`)
   } catch (error) {
@@ -170,7 +184,7 @@ async function handleSubmit() {
   <main class="review-write-section">
     <div class="container container-sm">
       <div class="page-header">
-        <h2 class="headline-lg">리뷰 작성하기</h2>
+        <h2 class="headline-lg">{{ isEditMode ? '리뷰 수정하기' : '리뷰 작성하기' }}</h2>
         <p class="body-md text-sub">서울에서의 특별한 경험을 공유해 주세요.</p>
       </div>
 
@@ -266,20 +280,25 @@ async function handleSubmit() {
           </div>
 
           <div class="action-section">
-            <div class="form-group pw-group">
-              <label for="password" class="label-sm form-label">수정용 비밀번호</label>
-              <input
-                id="password"
-                v-model="password"
-                type="password"
-                class="form-control pw-input"
-                placeholder="비밀번호 입력"
-                required
-              />
-              <p class="pw-tip">
-                ※ 게시글 수정/삭제 시 확인용으로 사용됩니다 (평문 저장)
-              </p>
-            </div>
+              <div class="form-group pw-group">
+                <label for="password" class="label-sm form-label">수정용 비밀번호</label>
+                <template v-if="!isEditMode">
+                  <input
+                    id="password"
+                    v-model="password"
+                    type="password"
+                    class="form-control pw-input"
+                    placeholder="비밀번호 입력"
+                    required
+                  />
+                  <p class="pw-tip">
+                    ※ 게시글 수정/삭제 시 확인용으로 사용됩니다 (평문 저장)
+                  </p>
+                </template>
+                <template v-else>
+                  <div class="label-sm">비밀번호가 확인되었습니다. 내용 수정 후 저장해 주세요.</div>
+                </template>
+              </div>
 
             <div class="btn-group">
               <button class="btn btn-outline" type="button" @click="handleCancel">
