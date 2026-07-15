@@ -185,6 +185,12 @@ const pageNumbers = computed(() => {
   return pages
 })
 
+async function setUseMock(value) {
+  useMockData.value = value
+  currentPage.value = 1
+  await loadPlaces()
+}
+
 async function selectCategory(category) {
   selectedCategory.value = category
   currentPage.value = 1
@@ -219,22 +225,22 @@ function goPage(page) {
     <div class="container list-shell">
       <div class="search-panel">
         <div class="mode-toggle">
-          <button
-            type="button"
-            class="mode-button"
-            :class="{ active: useMockData }"
-            @click="useMockData = true"
-          >
-            Fixture Mock
-          </button>
-          <button
-            type="button"
-            class="mode-button"
-            :class="{ active: !useMockData }"
-            @click="useMockData = false"
-          >
-            API
-          </button>
+                <button
+                  type="button"
+                  class="mode-button"
+                  :class="{ active: useMockData }"
+                  @click="setUseMock(true)"
+                >
+                  Fixture Mock
+                </button>
+                <button
+                  type="button"
+                  class="mode-button"
+                  :class="{ active: !useMockData }"
+                  @click="setUseMock(false)"
+                >
+                  API
+                </button>
         </div>
 
         <div class="search-box">
@@ -292,7 +298,6 @@ function goPage(page) {
                   <th>장소명</th>
                   <th>주소</th>
                   <th>평균별점</th>
-                  <th>작성일</th>
                 </tr>
               </thead>
               <tbody>
@@ -309,7 +314,6 @@ function goPage(page) {
                       {{ place.rating.toFixed(1) }}
                     </span>
                   </td>
-                  <td>{{ place.date }}</td>
                 </tr>
               </tbody>
             </table>
