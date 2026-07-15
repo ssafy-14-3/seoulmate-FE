@@ -11,18 +11,12 @@ const props = defineProps({
 const searchQuery = ref('')
 const selectedPlace = ref(props.initialReview?.selectedPlace ?? null)
 
-const useMockData = ref(true)
 const locations = ref([])
 const locLoading = ref(false)
 const locError = ref('')
 const hasSearched = ref(false)
 
-const mockLocations = [
-  { id: 1, name: '경복궁', category: '관광지', address: '서울특별시 종로구 사직로 161', image_url: '', avg_rating: 4.5, review_count: 12 },
-  { id: 2, name: '성수동 골목 카페', category: '맛집', address: '서울특별시 성동구 성수동', image_url: '', avg_rating: 4.1, review_count: 8 },
-  { id: 3, name: '반포 한강공원', category: '공원', address: '서울특별시 서초구', image_url: '', avg_rating: 4.7, review_count: 20 },
-  { id: 4, name: '광장시장', category: '쇼핑/전통', address: '서울특별시 종로구', image_url: '', avg_rating: 4.0, review_count: 5 },
-]
+// locations will be loaded from API
 
 async function fetchLocations() {
   const q = searchQuery.value.trim()
@@ -35,21 +29,16 @@ async function fetchLocations() {
   locError.value = ''
 
   try {
-    if (useMockData.value) {
-      const filtered = mockLocations.filter((it) => `${it.name} ${it.category} ${it.address}`.toLowerCase().includes(q.toLowerCase()))
-      locations.value = filtered.slice(0, 10)
-    } else {
-      const resp = await getLocationList({ q, page: 1, size: 10 })
-      locations.value = (resp?.items || []).map((it) => ({
-        id: it.id,
-        name: it.name,
-        category: it.category,
-        address: it.address,
-        image_url: it.image_url,
-        avg_rating: it.avg_rating,
-        review_count: it.review_count,
-      }))
-    }
+    const resp = await getLocationList({ q, page: 1, size: 10 })
+    locations.value = (resp?.items || []).map((it) => ({
+      id: it.id,
+      name: it.name,
+      category: it.category,
+      address: it.address,
+      image_url: it.image_url,
+      avg_rating: it.avg_rating,
+      review_count: it.review_count,
+    }))
   } catch (e) {
     locError.value = e?.message || '검색 중 오류가 발생했습니다.'
     locations.value = []
@@ -78,7 +67,7 @@ const route = useRoute()
 
 onMounted(async () => {
   const q = route.query
-  if (q?.location_id) {
+    if (q?.location_id) {
     const id = Number(q.location_id)
     // try to set name from query first, otherwise fetch detail
     const name = q.name || ''
@@ -92,7 +81,7 @@ onMounted(async () => {
         // ignore
       }
     }
-    useMockData.value = false
+    // always use API
   }
 })
 
@@ -139,18 +128,8 @@ async function handleSubmit() {
     return
   }
 
-  try {
+    try {
     isSubmitting.value = true
-    if (useMockData.value) {
-      await new Promise((resolve) => setTimeout(resolve, 800))
-      alert(isEditMode.value ? '리뷰가 성공적으로 수정되었습니다. (모드: Mock)' : '리뷰가 성공적으로 등록되었습니다. (모드: Mock)')
-      // on edit, clear session storage
-      if (isEditMode.value) {
-        try { sessionStorage.removeItem(`review_edit_${props.initialReview.reviewId}`) } catch {}
-      }
-      router.push(`/detail/${selectedPlace.value.id}`)
-      return
-    }
     const payload = {
       title: title.value,
       content: content.value,
@@ -203,10 +182,7 @@ async function handleSubmit() {
               <button type="button" class="search-button" @click="searchPlace">검색</button>
             </div>
 
-            <div class="mode-toggle" style="margin-top:8px; display:flex; gap:8px">
-              <button type="button" class="mode-button" :class="{ active: useMockData }" @click="useMockData = true">Fixture Mock</button>
-              <button type="button" class="mode-button" :class="{ active: !useMockData }" @click="useMockData = false">API</button>
-            </div>
+            <!-- always use API for location search -->
 
             <div class="location-results" style="margin-top:8px">
               <div v-if="locLoading" class="label-sm">검색 중...</div>
