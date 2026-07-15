@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import { sendChat } from '../../../api/index.js'
 
 const isOpen = ref(false)
 const input = ref('')
@@ -15,7 +16,7 @@ const toggleChat = () => {
   isOpen.value = !isOpen.value
 }
 
-const sendMessage = () => {
+const sendMessage = async () => {
   const text = input.value.trim()
   if (!text) return
 
@@ -27,13 +28,27 @@ const sendMessage = () => {
 
   input.value = ''
 
-  window.setTimeout(() => {
+  try {
+    const history = messages.value.map((message) => ({
+      role: message.role === 'bot' ? 'assistant' : 'user',
+      content: message.content,
+    }))
+
+    const response = await sendChat(text, history)
+
     messages.value.push({
       id: Date.now() + 1,
       role: 'bot',
-      content: '좋아요! 조금 더 구체적으로 알려주시면 도와드릴게요.',
+      content: response?.answer || response?.content || '죄송해요. 답변을 가져오지 못했어요.',
     })
-  }, 300)
+  } catch (error) {
+    console.error('챗봇 API 호출 중 오류 발생:', error)
+    messages.value.push({
+      id: Date.now() + 1,
+      role: 'bot',
+      content: '챗봇 응답을 가져오지 못했어요. 다시 시도해주세요.',
+    })
+  }
 }
 </script>
 
