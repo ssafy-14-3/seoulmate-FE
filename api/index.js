@@ -1,7 +1,7 @@
 // 설계문서(DB/API 설계서) 기준 API 모듈 — 추가 패키지 없이 fetch 사용
-// 배포 시 .env 에 VITE_API_BASE_URL=https://<render-url> 지정
+// 배포 시 .env 에 VITE_API_BASE_URL=https://seoulmate-be.onrender.com 지정
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const BASE_URL = import.meta.env.VITE_BASE_URL
 
 const request = async (path, { method = 'GET', params, body } = {}) => {
   const url = new URL(BASE_URL + path)
@@ -50,7 +50,7 @@ export const getLocationDetail = (id) => request(`/api/locations/${id}`)
 // ── 리뷰 ──────────────────────────────────────────
 
 export const getReviewList = (locationId, params) => {
-  request(`/api/locations/${locationId}/reviews`, { params })
+  return request(`/api/locations/${locationId}/reviews`, { params })
 }
 
 /**
@@ -65,7 +65,7 @@ export const getReviewList = (locationId, params) => {
  * }
  */
 export const postReview = (locationId, body) => {
-  request(`/api/locations/${locationId}/reviews`, { method: 'POST', body })
+  return request(`/api/locations/${locationId}/reviews`, { method: 'POST', body })
 }
 
 /**
@@ -80,7 +80,7 @@ export const postReview = (locationId, body) => {
  * }
  */
 export const updateReview = (reviewId, body) => {
-  request(`/api/reviews/${reviewId}`, { method: 'PUT', body })
+  return request(`/api/reviews/${reviewId}`, { method: 'PUT', body })
 }
 
 /**
@@ -89,7 +89,7 @@ export const updateReview = (reviewId, body) => {
  * @param {number} password
  */
 export const deleteReview = (reviewId, password) => {
-  request(`/api/reviews/${reviewId}`, { method: 'DELETE', body: { password } })
+  return request(`/api/reviews/${reviewId}`, { method: 'DELETE', body: { password } })
 }
 
 /**
@@ -98,7 +98,20 @@ export const deleteReview = (reviewId, password) => {
  * @param {number} password
  */
 export const checkReviewPassword = (reviewId, password) => {
-  request(`/api/reviews/${reviewId}/verify`, { method: 'POST', body: { password } })
+  return request(`/api/reviews/${reviewId}/verify`, { method: 'POST', body: { password } })
+}
+
+/**
+ * 최근 리뷰를 조회합니다.
+ * @param {Object} params
+ * params: {
+ *   page: number,
+ *   size: number
+ * }
+ */
+export const getRecentReviews = (params = { page: 1, size: 4 }) => {
+  return request('/api/reviews', { params })
+
 }
 
 // ── 챗봇 ──────────────────────────────────────────
@@ -112,5 +125,14 @@ export const checkReviewPassword = (reviewId, password) => {
  * ]
  */
 export const sendChat = (message, history = []) => {
-  request('/api/chat', { method: 'POST', body: { message, history } })
+  return request('/api/chat', { method: 'POST', body: { message, history } })
 }
+
+// ── 추가: 전체 리뷰 및 통계 ─────────────────────────────────
+export const getAllReviews = ({ page = 1, size = 10 } = {}) => {
+  const safePage = Number(page) || 1
+  const safeSize = Math.min(Number(size) || 10, 50)
+  return request('/api/reviews', { params: { page: safePage, size: safeSize } })
+}
+
+export const getReviewStats = () => request('/api/stats/reviews')

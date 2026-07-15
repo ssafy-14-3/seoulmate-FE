@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getLocationList } from '../../api'
 
@@ -10,7 +10,6 @@ const searchQuery = ref('')
 const selectedCategory = ref('전체')
 const currentPage = ref(1)
 const pageSize = 12
-const useMockData = ref(true)
 
 const places = ref([])
 const totalItems = ref(0)
@@ -21,74 +20,15 @@ const errorMessage = ref('')
 const categoryOptions = [
   '전체',
   '관광지',
-  '맛집',
-  '축제·행사',
-  '문화유산',
-  '공원',
-  '랜드마크',
-  '쇼핑/전통',
-  '전시/미술',
+  '문화시설',
+  '축제공연행사',
+  '여행코스',
+  '레포츠',
+  '숙박',
+  '쇼핑',
 ]
 
 const featuredPlaces = computed(() => places.value.slice(0, 3))
-
-const mockLocations = [
-  {
-    id: 1,
-    category: '관광지',
-    name: '경복궁',
-    address: '서울특별시 종로구 사직로 161',
-    rating: 4.8,
-    date: '2024.05.12',
-    summary: '고궁의 밤을 거닐다',
-    image:
-      'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    id: 2,
-    category: '관광지',
-    name: 'N서울타워',
-    address: '서울특별시 용산구 남산공원길 105',
-    rating: 4.5,
-    date: '2024.05.10',
-    summary: '서울의 야경을 한눈에',
-    image:
-      'https://images.unsplash.com/photo-1520106212299-d99c443e4568?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    id: 3,
-    category: '공원',
-    name: '반포한강공원',
-    address: '서울특별시 서초구 신반포로11길 40',
-    rating: 4.9,
-    date: '2024.05.08',
-    summary: '한강의 풍경과 피크닉',
-    image:
-      'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    id: 4,
-    category: '쇼핑/전통',
-    name: '광장시장',
-    address: '서울특별시 종로구 창경궁로 88',
-    rating: 4.3,
-    date: '2024.05.05',
-    summary: '전통시장과 길거리 음식',
-    image:
-      'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    id: 5,
-    category: '전시/미술',
-    name: 'DDP (동대문디자인플라자)',
-    address: '서울특별시 중구 을지로 281',
-    rating: 4.7,
-    date: '2024.05.01',
-    summary: '현대 건축과 전시 공간',
-    image:
-      'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=900&q=80',
-  },
-]
 
 function mapLocationItem(item) {
   return {
@@ -126,35 +66,13 @@ watch(searchQuery, () => {
   currentPage.value = 1
 })
 
-onMounted(() => {
-  void loadPlaces()
-})
-
 async function loadPlaces() {
   isLoading.value = true
   errorMessage.value = ''
 
   try {
-    if (useMockData.value) {
-      const filtered = mockLocations.filter((item) => {
-        const matchesCategory =
-          selectedCategory.value === '전체' || item.category === selectedCategory.value
-        const query = searchQuery.value.trim().toLowerCase()
-        const searchableText =
-          `${item.name} ${item.category} ${item.address} ${item.summary}`.toLowerCase()
-        const matchesSearch = !query || searchableText.includes(query)
-        return matchesCategory && matchesSearch
-      })
-
-      const start = (currentPage.value - 1) * pageSize
-      const pageItems = filtered.slice(start, start + pageSize)
-
-      places.value = pageItems.map(mapLocationItem)
-      totalItems.value = filtered.length
-      totalPages.value = Math.max(1, Math.ceil(totalItems.value / pageSize))
-      return
-    }
-
+    // 필터링·검색·페이지네이션은 전부 서버(API)가 처리
+    // category 미전달 시 전체 조회, 전달 시 해당 카테고리만 응답
     const response = await getLocationList({
       category: selectedCategory.value === '전체' ? undefined : selectedCategory.value,
       q: searchQuery.value.trim() || undefined,
@@ -177,31 +95,33 @@ async function loadPlaces() {
 
 const pagedPlaces = computed(() => places.value)
 
+// 필터링·페이지네이션이 반영된 목록상의 순번 (1부터 시작)
+function rowNumber(index) {
+  return String((currentPage.value - 1) * pageSize + index + 1).padStart(2, '0')
+}
+
+const PAGE_BLOCK = 10
+
+// 현재 페이지가 속한 10개 블록만 표시 (1~10, 11~20, ...)
 const pageNumbers = computed(() => {
+  const start = Math.floor((currentPage.value - 1) / PAGE_BLOCK) * PAGE_BLOCK + 1
+  const end = Math.min(start + PAGE_BLOCK - 1, totalPages.value)
   const pages = []
-  for (let i = 1; i <= totalPages.value; i += 1) {
+  for (let i = start; i <= end; i += 1) {
     pages.push(i)
   }
   return pages
 })
 
-async function setUseMock(value) {
-  useMockData.value = value
-  currentPage.value = 1
-  await loadPlaces()
-}
+function selectCategory(category) {
+  if (selectedCategory.value === category) return // 동일 카테고리 재클릭 무시
 
-async function selectCategory(category) {
-  selectedCategory.value = category
-  currentPage.value = 1
-
+  // 쿼리 변경 → route.query.category watch가 상태 갱신 + loadPlaces 수행
   if (category === '전체') {
     router.replace({ path: '/list' })
   } else {
     router.replace({ path: '/list', query: { category } })
   }
-
-  await loadPlaces()
 }
 
 function onSearch() {
@@ -233,25 +153,6 @@ function goPage(page) {
   <section class="list-page">
     <div class="container list-shell">
       <div class="search-panel">
-        <div class="mode-toggle">
-                <button
-                  type="button"
-                  class="mode-button"
-                  :class="{ active: useMockData }"
-                  @click="setUseMock(true)"
-                >
-                  Fixture Mock
-                </button>
-                <button
-                  type="button"
-                  class="mode-button"
-                  :class="{ active: !useMockData }"
-                  @click="setUseMock(false)"
-                >
-                  API
-                </button>
-        </div>
-
         <div class="search-box">
           <span class="material-symbols-outlined search-icon">search</span>
           <input
@@ -310,8 +211,12 @@ function goPage(page) {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="place in pagedPlaces" :key="place.id" @click="goToReview(place)">
-                  <td>{{ String(place.id).padStart(2, '0') }}</td>
+                <tr
+                  v-for="(place, index) in pagedPlaces"
+                  :key="place.id"
+                  @click="goDetail(place.id)"
+                >
+                  <td>{{ rowNumber(index) }}</td>
                   <td>
                     <span class="pill">{{ place.category }}</span>
                   </td>
@@ -432,25 +337,6 @@ function goPage(page) {
   background: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(37, 99, 235, 0.12);
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04);
-}
-.mode-toggle {
-  display: flex;
-  gap: 8px;
-}
-
-.mode-button {
-  border: 1px solid #dbeafe;
-  border-radius: 999px;
-  padding: 6px 12px;
-  background: #f8fbff;
-  color: #475569;
-  cursor: pointer;
-}
-
-.mode-button.active {
-  background: linear-gradient(135deg, #2563eb, #4f46e5);
-  color: white;
-  border-color: transparent;
 }
 .search-box {
   display: flex;
