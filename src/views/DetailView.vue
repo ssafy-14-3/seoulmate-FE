@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, reactive } from 'vue'
 import { useRoute } from 'vue-router'
+import router from '@/router.js'
 import {
   getLocationDetail,
   getReviewList,
@@ -70,10 +71,17 @@ async function fetchLocation() {
 
 async function fetchReviews() {
   try {
-    const data = await getReviewList(locationId, { page: page.value, size })
-    reviews.value = data.items
-    reviewTotal.value = data.total
-  } catch {
+    const base = import.meta.env.VITE_API_BASE_URL || 'https://seoulmate-be.onrender.com'
+    const url = new URL(`${base}/api/locations/${locationId}/reviews`)
+    url.searchParams.set('page', String(page.value))
+    url.searchParams.set('size', String(size))
+
+    const res = await fetch(url.toString(), { headers: { 'Content-Type': 'application/json' } })
+    if (!res.ok) return
+    const data = await res.json()
+    reviews.value = data.items || []
+    reviewTotal.value = data.total || 0
+  } catch (e) {
     /* 목록 로드 실패 시 빈 상태 유지 */
   }
 }
@@ -88,17 +96,8 @@ async function loadPage() {
 
 // ---------- 리뷰 작성 ----------
 function openWriteModal() {
-  Object.assign(formModal, {
-    open: true,
-    mode: 'create',
-    reviewId: null,
-    title: '',
-    content: '',
-    rating: 5,
-    password: '',
-    verifiedPassword: '',
-    error: '',
-  })
+  // 이동하여 작성 페이지에서 장소가 자동 선택되도록 쿼리 전달
+  router.push({ path: '/review/write', query: { location_id: String(locationId), name: location.value?.name || '' } })
 }
 
 // ---------- 수정/삭제: 비밀번호 확인 → 실행 ----------
@@ -126,39 +125,53 @@ async function confirmPassword() {
     passwordModal.error = '비밀번호를 입력해주세요.'
     return
   }
+  // 프론트엔드에서 비밀번호 길이 검증(백엔드 제약: 4~20자)
+  if (passwordModal.value.length < 4 || passwordModal.value.length > 20) {
+    passwordModal.error = '비밀번호는 4~20자로 입력해주세요.'
+    return
+  }
   passwordModal.loading = true
   passwordModal.error = ''
   try {
     if (passwordModal.mode === 'delete') {
       // DELETE는 body의 password로 바로 검증·삭제
-      await deleteReview(passwordModal.reviewId, { password: passwordModal.value })
+      await deleteReview(passwordModal.reviewId, passwordModal.value)
       closePasswordModal()
       // 마지막 페이지의 유일한 항목을 지웠으면 이전 페이지로
       if (reviews.value.length === 1 && page.value > 1) page.value -= 1
       await Promise.all([fetchReviews(), fetchLocation()])
     } else {
-      // 수정은 verify로 사전 확인 후 수정 모달 진입
-      await api(`/api/reviews/${passwordModal.reviewId}/verify`, {
-        method: 'POST',
-        body: JSON.stringify({ password: passwordModal.value }),
-      })
+      // 수정은 verify로 사전 확인 후 수정 페이지로 라우팅
+      const verify = await checkReviewPassword(passwordModal.reviewId, passwordModal.value)
+      // 일부 백엔드가 200 + { verified: false }를 반환할 수 있으므로 검사합니다.
+      if (!verify || verify.verified !== true) {
+        passwordModal.error = '비밀번호가 일치하지 않습니다.'
+        return
+      }
+      console.log('verify ok', verify)
       const target = reviews.value.find((r) => r.id === passwordModal.reviewId)
-      Object.assign(formModal, {
-        open: true,
-        mode: 'edit',
+      const payload = {
         reviewId: passwordModal.reviewId,
+        selectedPlace: { id: Number(locationId), name: location.value?.name, category: location.value?.category },
         title: target?.title ?? '',
         content: target?.content ?? '',
         rating: target?.rating ?? 5,
-        password: '',
         verifiedPassword: passwordModal.value,
-        error: '',
-      })
+      }
+      try {
+        sessionStorage.setItem(`review_edit_${passwordModal.reviewId}`, JSON.stringify(payload))
+      } catch {}
       closePasswordModal()
+      router.push(`/review/edit/${passwordModal.reviewId}`)
     }
   } catch (e) {
-    passwordModal.error =
-      e.code === 'PASSWORD_MISMATCH' ? '비밀번호가 일치하지 않습니다.' : e.message
+    // 에러는 모달 내부에만 표시합니다.
+    const msg = e?.message || '오류가 발생했습니다.'
+    if (e.code === 'PASSWORD_MISMATCH' || e.status === 401) {
+      passwordModal.error = '비밀번호가 일치하지 않습니다.'
+    } else {
+      passwordModal.error = msg
+    }
   } finally {
     passwordModal.loading = false
   }

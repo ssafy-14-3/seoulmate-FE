@@ -1,5 +1,5 @@
 // 설계문서(DB/API 설계서) 기준 API 모듈 — 추가 패키지 없이 fetch 사용
-// 배포 시 .env 에 VITE_API_BASE_URL=https://<render-url> 지정
+// 배포 시 .env 에 VITE_API_BASE_URL=https://seoulmate-be.onrender.com 지정
 
 const BASE_URL = import.meta.env.VITE_BASE_URL
 
@@ -111,6 +111,7 @@ export const checkReviewPassword = (reviewId, password) => {
  */
 export const getRecentReviews = (params = { page: 1, size: 4 }) => {
   return request('/api/reviews', { params })
+
 }
 
 // ── 챗봇 ──────────────────────────────────────────
@@ -126,3 +127,12 @@ export const getRecentReviews = (params = { page: 1, size: 4 }) => {
 export const sendChat = (message, history = []) => {
   return request('/api/chat', { method: 'POST', body: { message, history } })
 }
+
+// ── 추가: 전체 리뷰 및 통계 ─────────────────────────────────
+export const getAllReviews = ({ page = 1, size = 10 } = {}) => {
+  const safePage = Number(page) || 1
+  const safeSize = Math.min(Number(size) || 10, 50)
+  return request('/api/reviews', { params: { page: safePage, size: safeSize } })
+}
+
+export const getReviewStats = () => request('/api/stats/reviews')

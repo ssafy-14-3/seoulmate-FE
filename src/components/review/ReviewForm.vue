@@ -1,7 +1,8 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import router from '@/router.js'
-import { getLocationList } from '../../../api'
+import { getLocationList, postReview, getLocationDetail, updateReview } from '../../../api'
 
 const props = defineProps({
   initialReview: { type: Object, default: null }
@@ -10,18 +11,12 @@ const props = defineProps({
 const searchQuery = ref('')
 const selectedPlace = ref(props.initialReview?.selectedPlace ?? null)
 
-const useMockData = ref(true)
 const locations = ref([])
 const locLoading = ref(false)
 const locError = ref('')
 const hasSearched = ref(false)
 
-const mockLocations = [
-  { id: 1, name: '경복궁', category: '관광지', address: '서울특별시 종로구 사직로 161', image_url: '', avg_rating: 4.5, review_count: 12 },
-  { id: 2, name: '성수동 골목 카페', category: '맛집', address: '서울특별시 성동구 성수동', image_url: '', avg_rating: 4.1, review_count: 8 },
-  { id: 3, name: '반포 한강공원', category: '공원', address: '서울특별시 서초구', image_url: '', avg_rating: 4.7, review_count: 20 },
-  { id: 4, name: '광장시장', category: '쇼핑/전통', address: '서울특별시 종로구', image_url: '', avg_rating: 4.0, review_count: 5 },
-]
+// locations will be loaded from API
 
 async function fetchLocations() {
   const q = searchQuery.value.trim()
@@ -34,21 +29,16 @@ async function fetchLocations() {
   locError.value = ''
 
   try {
-    if (useMockData.value) {
-      const filtered = mockLocations.filter((it) => `${it.name} ${it.category} ${it.address}`.toLowerCase().includes(q.toLowerCase()))
-      locations.value = filtered.slice(0, 10)
-    } else {
-      const resp = await getLocationList({ q, page: 1, size: 10 })
-      locations.value = (resp?.items || []).map((it) => ({
-        id: it.id,
-        name: it.name,
-        category: it.category,
-        address: it.address,
-        image_url: it.image_url,
-        avg_rating: it.avg_rating,
-        review_count: it.review_count,
-      }))
-    }
+    const resp = await getLocationList({ q, page: 1, size: 10 })
+    locations.value = (resp?.items || []).map((it) => ({
+      id: it.id,
+      name: it.name,
+      category: it.category,
+      address: it.address,
+      image_url: it.image_url,
+      avg_rating: it.avg_rating,
+      review_count: it.review_count,
+    }))
   } catch (e) {
     locError.value = e?.message || '검색 중 오류가 발생했습니다.'
     locations.value = []
@@ -60,7 +50,8 @@ async function fetchLocations() {
 const title = ref(props.initialReview?.title ?? '')
 const rating = ref(props.initialReview?.rating ?? '5')
 const content = ref(props.initialReview?.content ?? '')
-const password = ref(props.initialReview?.password ?? '')
+const password = ref(props.initialReview?.verifiedPassword ?? props.initialReview?.password ?? '')
+const isEditMode = computed(() => !!(props.initialReview && props.initialReview.reviewId))
 const isSubmitting = ref(false)
 
 watch(() => props.initialReview, (v) => {
@@ -69,7 +60,29 @@ watch(() => props.initialReview, (v) => {
   title.value = v.title ?? ''
   rating.value = v.rating ?? '5'
   content.value = v.content ?? ''
-  password.value = v.password ?? ''
+  password.value = v.verifiedPassword ?? v.password ?? ''
+})
+
+const route = useRoute()
+
+onMounted(async () => {
+  const q = route.query
+    if (q?.location_id) {
+    const id = Number(q.location_id)
+    // try to set name from query first, otherwise fetch detail
+    const name = q.name || ''
+    if (name) {
+      selectedPlace.value = { id, name }
+    } else {
+      try {
+        const detail = await getLocationDetail(id)
+        selectedPlace.value = { id: detail.id, name: detail.name, category: detail.category }
+      } catch (e) {
+        // ignore
+      }
+    }
+    // always use API
+  }
 })
 
 function searchPlace() {
@@ -115,23 +128,28 @@ async function handleSubmit() {
     return
   }
 
-  try {
+    try {
     isSubmitting.value = true
-    // TODO: 백엔드 API 연동 시 아래 주석을 해제하여 사용하세요.
-    /*
     const payload = {
-      location_id: selectedPlace.value.id,
       title: title.value,
-      rating: parseInt(rating.value),
       content: content.value,
-      password: password.value
+      rating: parseInt(rating.value, 10),
     }
-    await createReview(payload)
-    */
 
-    await new Promise((resolve) => setTimeout(resolve, 800))
+    if (isEditMode.value) {
+      const reviewId = props.initialReview.reviewId
+      const pw = props.initialReview.verifiedPassword || password.value
+      await updateReview(reviewId, { ...payload, password: pw })
+      try { sessionStorage.removeItem(`review_edit_${reviewId}`) } catch {}
+      alert('리뷰가 성공적으로 수정되었습니다.')
+      router.push(`/detail/${selectedPlace.value.id}`)
+      return
+    }
+
+    // create
+    await postReview(selectedPlace.value.id, { ...payload, password: password.value })
     alert('리뷰가 성공적으로 등록되었습니다.')
-    router.push('/locations')
+    router.push(`/detail/${selectedPlace.value.id}`)
   } catch (error) {
     console.error(error)
     alert('리뷰 등록 중 오류가 발생했습니다.')
@@ -145,7 +163,7 @@ async function handleSubmit() {
   <main class="review-write-section">
     <div class="container container-sm">
       <div class="page-header">
-        <h2 class="headline-lg">리뷰 작성하기</h2>
+        <h2 class="headline-lg">{{ isEditMode ? '리뷰 수정하기' : '리뷰 작성하기' }}</h2>
         <p class="body-md text-sub">서울에서의 특별한 경험을 공유해 주세요.</p>
       </div>
 
@@ -153,21 +171,20 @@ async function handleSubmit() {
         <form @submit.prevent="handleSubmit">
           <div class="form-group">
             <label class="label-sm form-label">장소 선택</label>
-            <div class="search-box">
-              <span class="material-symbols-outlined search-icon">search</span>
-              <input
-                v-model="searchQuery"
-                type="text"
-                placeholder="리뷰를 작성할 장소를 검색해 주세요"
-                @keyup.enter="searchPlace"
-              />
-              <button type="button" class="search-button" @click="searchPlace">검색</button>
-            </div>
+            <template v-if="!isEditMode">
+              <div class="search-box">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input
+                  v-model="searchQuery"
+                  type="text"
+                  placeholder="리뷰를 작성할 장소를 검색해 주세요"
+                  @keyup.enter="searchPlace"
+                />
+                <button type="button" class="search-button" @click="searchPlace">검색</button>
+              </div>
+            </template>
 
-            <div class="mode-toggle" style="margin-top:8px; display:flex; gap:8px">
-              <button type="button" class="mode-button" :class="{ active: useMockData }" @click="useMockData = true">Fixture Mock</button>
-              <button type="button" class="mode-button" :class="{ active: !useMockData }" @click="useMockData = false">API</button>
-            </div>
+            <!-- always use API for location search -->
 
             <div class="location-results" style="margin-top:8px">
               <div v-if="locLoading" class="label-sm">검색 중...</div>
@@ -186,13 +203,13 @@ async function handleSubmit() {
               </div>
             </div>
 
-            <div v-if="selectedPlace" class="selected-place-preview">
+            <div v-if="selectedPlace" :class="['selected-place-preview', { compact: isEditMode }]">
               <div class="place-info">
                 <span class="material-symbols-outlined location-icon">location_on</span>
                 <span class="body-md font-medium">{{ selectedPlace.name || ('장소 #' + selectedPlace.id) }}</span>
                 <span v-if="selectedPlace.category" class="label-sm text-sub">| #{{ selectedPlace.category }}</span>
               </div>
-              <button class="btn-clear" type="button" @click="clearSelectedPlace">
+              <button v-if="!isEditMode" class="btn-clear" type="button" @click="clearSelectedPlace">
                 <span class="material-symbols-outlined icon-close">close</span>
               </button>
             </div>
@@ -241,20 +258,25 @@ async function handleSubmit() {
           </div>
 
           <div class="action-section">
-            <div class="form-group pw-group">
-              <label for="password" class="label-sm form-label">수정용 비밀번호</label>
-              <input
-                id="password"
-                v-model="password"
-                type="password"
-                class="form-control pw-input"
-                placeholder="비밀번호 입력"
-                required
-              />
-              <p class="pw-tip">
-                ※ 게시글 수정/삭제 시 확인용으로 사용됩니다 (평문 저장)
-              </p>
-            </div>
+              <div class="form-group pw-group">
+                <template v-if="isEditMode">
+                  <input type="hidden" id="password" name="password" :value="password" />
+                </template>
+                <template v-else>
+                  <label for="password" class="label-sm form-label">수정용 비밀번호</label>
+                  <input
+                    id="password"
+                    v-model="password"
+                    type="password"
+                    class="form-control pw-input"
+                    placeholder="비밀번호 입력"
+                    required
+                  />
+                  <p class="pw-tip">
+                    ※ 게시글 수정/삭제 시 확인용으로 사용됩니다 (평문 저장)
+                  </p>
+                </template>
+              </div>
 
             <div class="btn-group">
               <button class="btn btn-outline" type="button" @click="handleCancel">
@@ -326,6 +348,7 @@ async function handleSubmit() {
 .search-button { border: 0; border-radius: 999px; padding: 8px 14px; background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; cursor: pointer; box-shadow: 0 8px 18px rgba(37, 99, 235, 0.2); }
 .pl-10 { padding-left: 40px; }
 .selected-place-preview { margin-top: 8px; padding: 10px 12px; background: #fff; border: 1px solid #eef2ff; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 6px 14px rgba(15,23,42,0.04); }
+.selected-place-preview.compact { margin-top: 4px; }
 .place-info { display: flex; align-items: center; gap: 8px; }
 .location-icon { color: var(--color-primary); font-size: 20px; }
 .btn-clear { color: #334155; display: flex; align-items: center; justify-content: center; transition: color 0.15s ease; background: transparent; border: 0; padding: 6px; border-radius: 8px; }
