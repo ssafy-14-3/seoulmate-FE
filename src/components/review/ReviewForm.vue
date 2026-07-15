@@ -171,16 +171,18 @@ async function handleSubmit() {
         <form @submit.prevent="handleSubmit">
           <div class="form-group">
             <label class="label-sm form-label">장소 선택</label>
-            <div class="search-box">
-              <span class="material-symbols-outlined search-icon">search</span>
-              <input
-                v-model="searchQuery"
-                type="text"
-                placeholder="리뷰를 작성할 장소를 검색해 주세요"
-                @keyup.enter="searchPlace"
-              />
-              <button type="button" class="search-button" @click="searchPlace">검색</button>
-            </div>
+            <template v-if="!isEditMode">
+              <div class="search-box">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input
+                  v-model="searchQuery"
+                  type="text"
+                  placeholder="리뷰를 작성할 장소를 검색해 주세요"
+                  @keyup.enter="searchPlace"
+                />
+                <button type="button" class="search-button" @click="searchPlace">검색</button>
+              </div>
+            </template>
 
             <!-- always use API for location search -->
 
@@ -201,13 +203,13 @@ async function handleSubmit() {
               </div>
             </div>
 
-            <div v-if="selectedPlace" class="selected-place-preview">
+            <div v-if="selectedPlace" :class="['selected-place-preview', { compact: isEditMode }]">
               <div class="place-info">
                 <span class="material-symbols-outlined location-icon">location_on</span>
                 <span class="body-md font-medium">{{ selectedPlace.name || ('장소 #' + selectedPlace.id) }}</span>
                 <span v-if="selectedPlace.category" class="label-sm text-sub">| #{{ selectedPlace.category }}</span>
               </div>
-              <button class="btn-clear" type="button" @click="clearSelectedPlace">
+              <button v-if="!isEditMode" class="btn-clear" type="button" @click="clearSelectedPlace">
                 <span class="material-symbols-outlined icon-close">close</span>
               </button>
             </div>
@@ -346,6 +348,7 @@ async function handleSubmit() {
 .search-button { border: 0; border-radius: 999px; padding: 8px 14px; background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; cursor: pointer; box-shadow: 0 8px 18px rgba(37, 99, 235, 0.2); }
 .pl-10 { padding-left: 40px; }
 .selected-place-preview { margin-top: 8px; padding: 10px 12px; background: #fff; border: 1px solid #eef2ff; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 6px 14px rgba(15,23,42,0.04); }
+.selected-place-preview.compact { margin-top: 4px; }
 .place-info { display: flex; align-items: center; gap: 8px; }
 .location-icon { color: var(--color-primary); font-size: 20px; }
 .btn-clear { color: #334155; display: flex; align-items: center; justify-content: center; transition: color 0.15s ease; background: transparent; border: 0; padding: 6px; border-radius: 8px; }
