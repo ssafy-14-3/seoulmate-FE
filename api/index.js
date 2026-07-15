@@ -65,7 +65,7 @@ export const getReviewList = (locationId, params) => {
  * }
  */
 export const postReview = (locationId, body) => {
-  request(`/api/locations/${locationId}/reviews`, { method: 'POST', body })
+  return request(`/api/locations/${locationId}/reviews`, { method: 'POST', body })
 }
 
 /**
@@ -80,7 +80,7 @@ export const postReview = (locationId, body) => {
  * }
  */
 export const updateReview = (reviewId, body) => {
-  request(`/api/reviews/${reviewId}`, { method: 'PUT', body })
+  return request(`/api/reviews/${reviewId}`, { method: 'PUT', body })
 }
 
 /**
@@ -89,7 +89,7 @@ export const updateReview = (reviewId, body) => {
  * @param {number} password
  */
 export const deleteReview = (reviewId, password) => {
-  request(`/api/reviews/${reviewId}`, { method: 'DELETE', body: { password } })
+  return request(`/api/reviews/${reviewId}`, { method: 'DELETE', body: { password } })
 }
 
 /**
@@ -98,7 +98,7 @@ export const deleteReview = (reviewId, password) => {
  * @param {number} password
  */
 export const checkReviewPassword = (reviewId, password) => {
-  request(`/api/reviews/${reviewId}/verify`, { method: 'POST', body: { password } })
+  return request(`/api/reviews/${reviewId}/verify`, { method: 'POST', body: { password } })
 }
 
 /**

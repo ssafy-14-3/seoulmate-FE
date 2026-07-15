@@ -12,16 +12,16 @@ const categories = [
     category: '관광지',
   },
   {
-    label: '맛집',
-    icon: 'restaurant',
-    desc: '현지인이 추천하는 숨겨진 골목 식당과 카페.',
-    category: '맛집',
+    label: '여행코스',
+    icon: 'map',
+    desc: '서울의 숨은 명소를 따라 떠나는 여행 코스 추천.',
+    category: '여행코스',
   },
   {
     label: '축제·행사',
     icon: 'event',
     desc: '지금 이 순간, 서울에서 열리는 활기찬 축제 소식.',
-    category: '축제·행사',
+    category: '축제공연행사',
   },
 ]
 
