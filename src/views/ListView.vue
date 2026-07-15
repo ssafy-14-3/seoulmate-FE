@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { fetchLocations } from '../../api'
+import { getLocationList } from '../../api'
 
 const route = useRoute()
 const router = useRouter()
@@ -27,7 +27,7 @@ const categoryOptions = [
   '공원',
   '랜드마크',
   '쇼핑/전통',
-  '전시/미술'
+  '전시/미술',
 ]
 
 const featuredPlaces = computed(() => places.value.slice(0, 3))
@@ -41,7 +41,8 @@ const mockLocations = [
     rating: 4.8,
     date: '2024.05.12',
     summary: '고궁의 밤을 거닐다',
-    image: 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=900&q=80'
+    image:
+      'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=900&q=80',
   },
   {
     id: 2,
@@ -51,7 +52,8 @@ const mockLocations = [
     rating: 4.5,
     date: '2024.05.10',
     summary: '서울의 야경을 한눈에',
-    image: 'https://images.unsplash.com/photo-1520106212299-d99c443e4568?auto=format&fit=crop&w=900&q=80'
+    image:
+      'https://images.unsplash.com/photo-1520106212299-d99c443e4568?auto=format&fit=crop&w=900&q=80',
   },
   {
     id: 3,
@@ -61,7 +63,8 @@ const mockLocations = [
     rating: 4.9,
     date: '2024.05.08',
     summary: '한강의 풍경과 피크닉',
-    image: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80'
+    image:
+      'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80',
   },
   {
     id: 4,
@@ -71,7 +74,8 @@ const mockLocations = [
     rating: 4.3,
     date: '2024.05.05',
     summary: '전통시장과 길거리 음식',
-    image: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=900&q=80'
+    image:
+      'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=900&q=80',
   },
   {
     id: 5,
@@ -81,8 +85,9 @@ const mockLocations = [
     rating: 4.7,
     date: '2024.05.01',
     summary: '현대 건축과 전시 공간',
-    image: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=900&q=80'
-  }
+    image:
+      'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=900&q=80',
+  },
 ]
 
 function mapLocationItem(item) {
@@ -96,11 +101,14 @@ function mapLocationItem(item) {
       ? new Date(item.created_at).toLocaleDateString('ko-KR', {
           year: 'numeric',
           month: '2-digit',
-          day: '2-digit'
+          day: '2-digit',
         })
       : item.date || '',
     summary: item.description ?? item.summary ?? '',
-    image: item.image_url || item.image || 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80'
+    image:
+      item.image_url ||
+      item.image ||
+      'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80',
   }
 }
 
@@ -111,7 +119,7 @@ watch(
     currentPage.value = 1
     void loadPlaces()
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 watch(searchQuery, () => {
@@ -129,9 +137,11 @@ async function loadPlaces() {
   try {
     if (useMockData.value) {
       const filtered = mockLocations.filter((item) => {
-        const matchesCategory = selectedCategory.value === '전체' || item.category === selectedCategory.value
+        const matchesCategory =
+          selectedCategory.value === '전체' || item.category === selectedCategory.value
         const query = searchQuery.value.trim().toLowerCase()
-        const searchableText = `${item.name} ${item.category} ${item.address} ${item.summary}`.toLowerCase()
+        const searchableText =
+          `${item.name} ${item.category} ${item.address} ${item.summary}`.toLowerCase()
         const matchesSearch = !query || searchableText.includes(query)
         return matchesCategory && matchesSearch
       })
@@ -145,11 +155,11 @@ async function loadPlaces() {
       return
     }
 
-    const response = await fetchLocations({
+    const response = await getLocationList({
       category: selectedCategory.value === '전체' ? undefined : selectedCategory.value,
       q: searchQuery.value.trim() || undefined,
       page: currentPage.value,
-      size: pageSize
+      size: pageSize,
     })
 
     places.value = (response?.items || []).map(mapLocationItem)
@@ -207,13 +217,22 @@ function goPage(page) {
 <template>
   <section class="list-page">
     <div class="container list-shell">
-
       <div class="search-panel">
         <div class="mode-toggle">
-          <button type="button" class="mode-button" :class="{ active: useMockData }" @click="useMockData = true">
+          <button
+            type="button"
+            class="mode-button"
+            :class="{ active: useMockData }"
+            @click="useMockData = true"
+          >
             Fixture Mock
           </button>
-          <button type="button" class="mode-button" :class="{ active: !useMockData }" @click="useMockData = false">
+          <button
+            type="button"
+            class="mode-button"
+            :class="{ active: !useMockData }"
+            @click="useMockData = false"
+          >
             API
           </button>
         </div>
@@ -245,7 +264,12 @@ function goPage(page) {
 
       <div class="content-grid">
         <aside class="feature-panel">
-          <div v-for="place in featuredPlaces" :key="place.id" class="feature-card" @click="goDetail(place.id)">
+          <div
+            v-for="place in featuredPlaces"
+            :key="place.id"
+            class="feature-card"
+            @click="goDetail(place.id)"
+          >
             <div class="feature-card-overlay">
               <p class="feature-card-tag">이달의 추천</p>
               <h4 class="feature-card-title">{{ place.name }}</h4>
@@ -305,7 +329,11 @@ function goPage(page) {
             >
               {{ page }}
             </button>
-            <button type="button" :disabled="currentPage === totalPages" @click="goPage(currentPage + 1)">
+            <button
+              type="button"
+              :disabled="currentPage === totalPages"
+              @click="goPage(currentPage + 1)"
+            >
               <span class="material-symbols-outlined">chevron_right</span>
             </button>
           </div>
