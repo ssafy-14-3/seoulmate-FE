@@ -83,7 +83,7 @@ function formatDate(iso) {
 
 
 function goCategory(category) {
-  router.push({ path: '/locations', query: { category } })
+  router.push({ path: '/list', query: { category } })
 }
 
 function goList() {
