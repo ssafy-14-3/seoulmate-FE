@@ -131,7 +131,7 @@ function goCategory(category) {
           v-for="review in recentReviews"
           :key="review.id"
           class="review-card"
-          @click="goDetail(review.id)"
+          @click="goDetail(review.location_id)"
         >
           <div class="review-meta">
             <div class="avatar">
