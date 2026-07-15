@@ -3,7 +3,7 @@
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
-async function request(path, { method = 'GET', params, body } = {}) {
+const request = async (path, { method = 'GET', params, body } = {}) => {
   const url = new URL(BASE_URL + path)
   if (params) {
     Object.entries(params).forEach(([k, v]) => {
@@ -31,25 +31,86 @@ async function request(path, { method = 'GET', params, body } = {}) {
 }
 
 // ── 장소 ──────────────────────────────────────────
-export const fetchLocations = (params) => request('/api/locations', { params })
-export const fetchLocation = (id) => request(`/api/locations/${id}`)
+export const getLocationList = ({ category, q, page = 1, size = 10 } = {}) => {
+  const safePage = Number(page) || 1
+  const safeSize = Math.min(Number(size) || 10, 50)
+
+  return request('/api/locations', {
+    params: {
+      category: category || undefined,
+      q: q || undefined,
+      page: safePage,
+      size: safeSize,
+    },
+  })
+}
+
+export const getLocationDetail = (id) => request(`/api/locations/${id}`)
 
 // ── 리뷰 ──────────────────────────────────────────
-export const fetchReviews = (locationId, params) =>
+
+export const getReviewList = (locationId, params) => {
   request(`/api/locations/${locationId}/reviews`, { params })
+}
 
-export const createReview = (locationId, body) =>
+/**
+ * 리뷰를 작성합니다.
+ * @param {number} locationId
+ * @param {Object} body
+ *  body: {
+ *   title: string, (1 ~ 100 characters)
+ *   content: string, (1 ~2000 characters)
+ *   rating: number (1 ~ 5),
+ *   password: string (4 ~ 20 characters)
+ * }
+ */
+export const postReview = (locationId, body) => {
   request(`/api/locations/${locationId}/reviews`, { method: 'POST', body })
+}
 
-export const updateReview = (reviewId, body) =>
+/**
+ * 리뷰를 업데이트합니다.
+ * @param {number} reviewId
+ * @param {Object} body
+ * body: {
+ *   title: string, (1 ~ 100 characters)
+ *   content: string, (1 ~2000 characters)
+ *   rating: number (1 ~ 5),
+ *   password: string (4 ~ 20 characters)
+ * }
+ */
+export const updateReview = (reviewId, body) => {
   request(`/api/reviews/${reviewId}`, { method: 'PUT', body })
+}
 
-export const deleteReview = (reviewId, password) =>
+/**
+ * 리뷰를 삭제합니다.
+ * @param {number} reviewId
+ * @param {number} password
+ */
+export const deleteReview = (reviewId, password) => {
   request(`/api/reviews/${reviewId}`, { method: 'DELETE', body: { password } })
+}
 
-export const verifyReviewPassword = (reviewId, password) =>
+/**
+ * 리뷰 비밀번호를 검증합니다.
+ * @param {number} reviewId
+ * @param {number} password
+ */
+export const checkReviewPassword = (reviewId, password) => {
   request(`/api/reviews/${reviewId}/verify`, { method: 'POST', body: { password } })
+}
 
 // ── 챗봇 ──────────────────────────────────────────
-export const sendChat = (message, history = []) =>
+/**
+ * 챗봇에게 메시지를 전송합니다.
+ * @param {string} message
+ * @param {Array} history
+ * history: [
+ *   { role: 'user' | 'assistant', content: string },
+ *   ...
+ * ]
+ */
+export const sendChat = (message, history = []) => {
   request('/api/chat', { method: 'POST', body: { message, history } })
+}
