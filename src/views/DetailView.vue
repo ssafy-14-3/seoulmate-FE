@@ -9,12 +9,14 @@ import {
   deleteReview,
   checkReviewPassword,
 } from '../../api/index.js'
+import StatusLottie from '@/components/StatusLottie.vue'
 
 const route = useRoute()
 const locationId = route.params.id
 
 // ---------- 상태 ----------
 const location = ref(null)
+const isLoading = ref(true)
 const loadError = ref('')
 const reviews = ref([])
 const reviewTotal = ref(0)
@@ -76,9 +78,12 @@ async function fetchReviews() {
   }
 }
 
-function changePage(p) {
-  page.value = p
-  fetchReviews()
+/** 최초 진입/재시도 시 전체 로드 (로딩 Lottie 표시) */
+async function loadPage() {
+  isLoading.value = true
+  loadError.value = ''
+  await Promise.all([fetchLocation(), fetchReviews()])
+  isLoading.value = false
 }
 
 // ---------- 리뷰 작성 ----------
@@ -126,14 +131,17 @@ async function confirmPassword() {
   try {
     if (passwordModal.mode === 'delete') {
       // DELETE는 body의 password로 바로 검증·삭제
-      await deleteReview(passwordModal.reviewId, passwordModal.value)
+      await deleteReview(passwordModal.reviewId, { password: passwordModal.value })
       closePasswordModal()
       // 마지막 페이지의 유일한 항목을 지웠으면 이전 페이지로
       if (reviews.value.length === 1 && page.value > 1) page.value -= 1
       await Promise.all([fetchReviews(), fetchLocation()])
     } else {
       // 수정은 verify로 사전 확인 후 수정 모달 진입
-      await checkReviewPassword(passwordModal.reviewId, passwordModal.value)
+      await api(`/api/reviews/${passwordModal.reviewId}/verify`, {
+        method: 'POST',
+        body: JSON.stringify({ password: passwordModal.value }),
+      })
       const target = reviews.value.find((r) => r.id === passwordModal.reviewId)
       Object.assign(formModal, {
         open: true,
@@ -214,14 +222,23 @@ function formatDate(iso) {
   return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}`
 }
 
-onMounted(() => {
-  fetchLocation()
-  fetchReviews()
-})
+onMounted(loadPage)
 </script>
 
 <template>
-  <main class="page" v-if="location">
+  <!-- 로딩 중 -->
+  <StatusLottie v-if="isLoading" type="loading" message="지역 정보를 불러오는 중이에요" />
+
+  <!-- 로드 실패 -->
+  <StatusLottie
+    v-else-if="loadError || !location"
+    type="error"
+    :message="loadError || '데이터를 불러오지 못했습니다.'"
+    @retry="loadPage"
+  />
+
+  <!-- 정상 -->
+  <main v-else class="page">
     <!-- ===== 장소 상세 (헤더 카드) ===== -->
     <section class="detail-card">
       <div class="detail-layout">
@@ -430,10 +447,6 @@ onMounted(() => {
         </div>
       </div>
     </div>
-  </main>
-
-  <main v-else class="page">
-    <p class="empty-text">{{ loadError || '불러오는 중…' }}</p>
   </main>
 </template>
 
