@@ -1,7 +1,8 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import router from '@/router.js'
-import { getLocationList, postReview } from '../../../api'
+import { getLocationList, postReview, getLocationDetail } from '../../../api'
 
 const props = defineProps({
   initialReview: { type: Object, default: null }
@@ -70,6 +71,28 @@ watch(() => props.initialReview, (v) => {
   rating.value = v.rating ?? '5'
   content.value = v.content ?? ''
   password.value = v.password ?? ''
+})
+
+const route = useRoute()
+
+onMounted(async () => {
+  const q = route.query
+  if (q?.location_id) {
+    const id = Number(q.location_id)
+    // try to set name from query first, otherwise fetch detail
+    const name = q.name || ''
+    if (name) {
+      selectedPlace.value = { id, name }
+    } else {
+      try {
+        const detail = await getLocationDetail(id)
+        selectedPlace.value = { id: detail.id, name: detail.name, category: detail.category }
+      } catch (e) {
+        // ignore
+      }
+    }
+    useMockData.value = false
+  }
 })
 
 function searchPlace() {

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, reactive } from 'vue'
 import { useRoute } from 'vue-router'
+import router from '@/router.js'
 import {
   getLocationDetail,
   getReviewList,
@@ -70,10 +71,17 @@ async function fetchLocation() {
 
 async function fetchReviews() {
   try {
-    const data = await getReviewList(locationId, { page: page.value, size })
-    reviews.value = data.items
-    reviewTotal.value = data.total
-  } catch {
+    const base = import.meta.env.VITE_API_BASE_URL || 'https://seoulmate-be.onrender.com'
+    const url = new URL(`${base}/api/locations/${locationId}/reviews`)
+    url.searchParams.set('page', String(page.value))
+    url.searchParams.set('size', String(size))
+
+    const res = await fetch(url.toString(), { headers: { 'Content-Type': 'application/json' } })
+    if (!res.ok) return
+    const data = await res.json()
+    reviews.value = data.items || []
+    reviewTotal.value = data.total || 0
+  } catch (e) {
     /* 목록 로드 실패 시 빈 상태 유지 */
   }
 }
@@ -88,17 +96,8 @@ async function loadPage() {
 
 // ---------- 리뷰 작성 ----------
 function openWriteModal() {
-  Object.assign(formModal, {
-    open: true,
-    mode: 'create',
-    reviewId: null,
-    title: '',
-    content: '',
-    rating: 5,
-    password: '',
-    verifiedPassword: '',
-    error: '',
-  })
+  // 이동하여 작성 페이지에서 장소가 자동 선택되도록 쿼리 전달
+  router.push({ path: '/review/write', query: { location_id: String(locationId), name: location.value?.name || '' } })
 }
 
 // ---------- 수정/삭제: 비밀번호 확인 → 실행 ----------
