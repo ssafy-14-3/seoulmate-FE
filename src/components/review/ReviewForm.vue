@@ -50,7 +50,7 @@ async function fetchLocations() {
 const title = ref(props.initialReview?.title ?? '')
 const rating = ref(props.initialReview?.rating ?? '5')
 const content = ref(props.initialReview?.content ?? '')
-const password = ref(props.initialReview?.password ?? '')
+const password = ref(props.initialReview?.verifiedPassword ?? props.initialReview?.password ?? '')
 const isEditMode = computed(() => !!(props.initialReview && props.initialReview.reviewId))
 const isSubmitting = ref(false)
 
@@ -60,7 +60,7 @@ watch(() => props.initialReview, (v) => {
   title.value = v.title ?? ''
   rating.value = v.rating ?? '5'
   content.value = v.content ?? ''
-  password.value = v.password ?? ''
+  password.value = v.verifiedPassword ?? v.password ?? ''
 })
 
 const route = useRoute()
@@ -258,7 +258,6 @@ async function handleSubmit() {
           <div class="action-section">
               <div class="form-group pw-group">
                 <label for="password" class="label-sm form-label">수정용 비밀번호</label>
-                <template v-if="!isEditMode">
                   <input
                     id="password"
                     v-model="password"
@@ -267,13 +266,10 @@ async function handleSubmit() {
                     placeholder="비밀번호 입력"
                     required
                   />
-                  <p class="pw-tip">
+                  <p v-if="!isEditMode" class="pw-tip">
                     ※ 게시글 수정/삭제 시 확인용으로 사용됩니다 (평문 저장)
                   </p>
-                </template>
-                <template v-else>
-                  <div class="label-sm">비밀번호가 확인되었습니다. 내용 수정 후 저장해 주세요.</div>
-                </template>
+                  <div v-else class="label-sm">비밀번호가 자동 입력되어 있습니다. 필요 시 변경 후 저장해 주세요.</div>
               </div>
 
             <div class="btn-group">
