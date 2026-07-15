@@ -8,7 +8,7 @@ const router = useRouter()
 const searchQuery = ref('')
 const selectedCategory = ref('전체')
 const currentPage = ref(1)
-const pageSize = 8
+const pageSize = 13
 
 const places = ref([])
 
@@ -144,6 +144,156 @@ async function loadPlaces() {
       date: '2024.04.10',
       summary: '도심 속 자연 휴식',
       image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=900&q=80'
+    },
+    {
+      id: 11,
+      category: '축제·행사',
+      name: '서울라이트 뮤직 페스티벌',
+      address: '서울특별시 송파구 올림픽로 424',
+      rating: 4.4,
+      date: '2024.04.08',
+      summary: '도심 속 야간 음악 축제',
+      image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=900&q=80'
+    },
+    {
+      id: 12,
+      category: '맛집',
+      name: '이태원 퓨전 음식거리',
+      address: '서울특별시 용산구 이태원로 217',
+      rating: 4.6,
+      date: '2024.04.05',
+      summary: '다양한 맛의 밤거리',
+      image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=900&q=80'
+    },
+    {
+      id: 13,
+      category: '전시/미술',
+      name: '국립현대미술관',
+      address: '서울특별시 종로구 삼청로 30',
+      rating: 4.7,
+      date: '2024.03.30',
+      summary: '현대 미술의 감각을 만나다',
+      image: 'https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=900&q=80'
+    },
+    {
+      id: 14,
+      category: '관광지',
+      name: '창덕궁',
+      address: '서울특별시 종로구 율곡로 99',
+      rating: 4.8,
+      date: '2024.03.28',
+      summary: '자연과 궁궐의 조화',
+      image: 'https://images.unsplash.com/photo-1526481280693-3bfa7568e0f3?auto=format&fit=crop&w=900&q=80'
+    },
+    {
+      id: 15,
+      category: '공원',
+      name: '북서울꿈의숲',
+      address: '서울특별시 강북구 월계로 173',
+      rating: 4.5,
+      date: '2024.03.24',
+      summary: '산책과 힐링의 공간',
+      image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=900&q=80'
+    },
+    {
+      id: 16,
+      category: '문화유산',
+      name: '석촌호수 문화공원',
+      address: '서울특별시 송파구 석촌호수로 188',
+      rating: 4.4,
+      date: '2024.03.20',
+      summary: '호수와 문화의 공존',
+      image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80'
+    },
+    {
+      id: 17,
+      category: '쇼핑/전통',
+      name: '이수재래시장',
+      address: '서울특별시 동작구 이수로 123',
+      rating: 4.2,
+      date: '2024.03.18',
+      summary: '전통시장과 로컬 먹거리',
+      image: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=900&q=80'
+    },
+    {
+      id: 18,
+      category: '축제·행사',
+      name: '서울문화재단 야간행사',
+      address: '서울특별시 중구 세종대로 110',
+      rating: 4.3,
+      date: '2024.03.15',
+      summary: '밤을 즐기는 문화 이벤트',
+      image: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=900&q=80'
+    },
+    {
+      id: 19,
+      category: '랜드마크',
+      name: '청계천 산책로',
+      address: '서울특별시 종로구 청계천로 1',
+      rating: 4.6,
+      date: '2024.03.12',
+      summary: '도심 속 산책과 휴식',
+      image: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=900&q=80'
+    },
+    {
+      id: 20,
+      category: '관광지',
+      name: '덕수궁',
+      address: '서울특별시 중구 세종대로 99',
+      rating: 4.7,
+      date: '2024.03.10',
+      summary: '서울의 역사와 풍경',
+      image: 'https://images.unsplash.com/photo-1526481280693-3bfa7568e0f3?auto=format&fit=crop&w=900&q=80'
+    },
+    {
+      id: 21,
+      category: '맛집',
+      name: '망원동 맛집 스트리트',
+      address: '서울특별시 마포구 망원로 1',
+      rating: 4.5,
+      date: '2024.03.08',
+      summary: '로컬 맛집과 브런치',
+      image: 'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?auto=format&fit=crop&w=900&q=80'
+    },
+    {
+      id: 22,
+      category: '전시/미술',
+      name: '서울시립미술관',
+      address: '서울특별시 성동구 왕십리로 136',
+      rating: 4.4,
+      date: '2024.03.05',
+      summary: '작품과 함께하는 여유',
+      image: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&w=900&q=80'
+    },
+    {
+      id: 23,
+      category: '공원',
+      name: '월드컵공원',
+      address: '서울특별시 마포구 성산동 400',
+      rating: 4.8,
+      date: '2024.03.02',
+      summary: '넓은 공원과 산책 코스',
+      image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=900&q=80'
+    },
+    {
+      id: 24,
+      category: '관광지',
+      name: '서울숲',
+      address: '서울특별시 성동구 뚝섬로 273',
+      rating: 4.7,
+      date: '2024.02.29',
+      summary: '도심 속 녹지와 산책',
+      image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=900&q=80'
+    },
+    {
+      id: 25,
+      category: '축제·행사',
+      name: '한강 밤도깨비 야시장',
+      address: '서울특별시 영등포구 여의동로 330',
+      rating: 4.6,
+      date: '2024.02.25',
+      summary: '밤의 야시장과 먹거리',
+      image: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80'
     }
   ]
 }
