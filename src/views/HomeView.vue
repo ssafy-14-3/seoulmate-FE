@@ -81,21 +81,16 @@ function formatDate(iso) {
   return `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
 }
 
-
-function goCategory(category) {
-  router.push({ path: '/list', query: { category } })
+function goWriteReview(category) {
+  router.push('/review/write')
 }
 
 function goList() {
   router.push('/list')
 }
 
-function goWriteReview() {
-  router.push('/review/write')
-}
-
 function goDetail(locationId) {
-  router.push(`/locations/${locationId}`)
+  router.push(`/detail/${locationId}`)
 }
 </script>
 
@@ -131,7 +126,7 @@ function goDetail(locationId) {
           v-for="cat in categories"
           :key="cat.category"
           class="category-card"
-          @click="goCategory(cat.category)"
+          @click="goList(cat.category)"
         >
           <div class="category-icon">
             <span class="material-symbols-outlined">{{ cat.icon }}</span>
@@ -166,7 +161,7 @@ function goDetail(locationId) {
           v-for="review in recentReviews"
           :key="review.id"
           class="review-card"
-          @click="goDetail(review.location_id)"
+          @click="goDetail(review.id)"
         >
           <div class="review-meta">
             <div class="avatar">
