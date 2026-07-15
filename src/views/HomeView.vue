@@ -81,17 +81,16 @@ function formatDate(iso) {
   return `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
 }
 
-
-function goCategory(category) {
-  router.push({ path: '/locations', query: { category } })
+function goWriteReview(category) {
+  router.push('/review/write')
 }
 
 function goList() {
-  router.push('/locations')
+  router.push('/list')
 }
 
 function goDetail(locationId) {
-  router.push(`/locations/${locationId}`)
+  router.push(`/detail/${locationId}`)
 }
 </script>
 
@@ -110,7 +109,7 @@ function goDetail(locationId) {
       </p>
       <div class="hero-actions">
         <button class="btn btn-primary" @click="goList">정보 찾기</button>
-        <button class="btn btn-outline" @click="goList">리뷰 작성하기</button>
+        <button class="btn btn-outline" @click="goWriteReview">리뷰 작성하기</button>
       </div>
     </div>
 
@@ -127,7 +126,7 @@ function goDetail(locationId) {
           v-for="cat in categories"
           :key="cat.category"
           class="category-card"
-          @click="goCategory(cat.category)"
+          @click="goList(cat.category)"
         >
           <div class="category-icon">
             <span class="material-symbols-outlined">{{ cat.icon }}</span>
@@ -162,7 +161,7 @@ function goDetail(locationId) {
           v-for="review in recentReviews"
           :key="review.id"
           class="review-card"
-          @click="goDetail(review.location_id)"
+          @click="goDetail(review.id)"
         >
           <div class="review-meta">
             <div class="avatar">
