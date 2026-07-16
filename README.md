@@ -20,7 +20,7 @@ Seoulmate는 서울의 관광지, 여행 코스, 축제·행사 정보를 한눈
 
 ## 팀원 소개
 
-| 🖥️ Web FE                                                 | ⚙️ Web BE                                                | 🖥️ Web FE                                                |
+| ⚙️ Web BE                                                 | 🖥️ Web FE                                                | 🖥️ Web FE                                                |
 | --------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | <img src="https://github.com/maark1106.png" width="200"/> | <img src="https://github.com/medAndro.png" width="200"/> | <img src="https://github.com/dannysir.png" width="200"/> |
 | [황준영](https://github.com/maark1106)                    | [장지형](https://github.com/medAndro)                    | [서산](https://github.com/dannysir)                      |
