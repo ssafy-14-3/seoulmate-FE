@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getLocationList } from '../../api'
+import StatusLottie from '@/components/StatusLottie.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -195,7 +196,7 @@ function goPage(page) {
           </div>
         </aside>
         <div class="table-panel">
-          <p v-if="isLoading" class="table-state">목록을 불러오는 중입니다...</p>
+          <StatusLottie v-if="isLoading" type="loading" message="목록을 불러오는 중입니다..." />
           <p v-else-if="errorMessage" class="table-state error">{{ errorMessage }}</p>
           <p v-else-if="places.length === 0" class="table-state">표시할 장소가 없습니다.</p>
 
