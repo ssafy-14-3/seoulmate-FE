@@ -25,6 +25,11 @@ const reviewTotal = ref(0)
 const page = ref(1)
 const size = 10
 
+// ---- 날씨 정보 (Open-Meteo, API 키 불필요) ----
+const weather = ref(null)
+const weatherLoading = ref(false)
+const weatherError = ref('')
+
 const passwordModal = reactive({
   open: false,
   mode: 'edit',
@@ -62,6 +67,23 @@ const distributionRows = computed(() => {
 async function fetchLocation() {
   try {
     location.value = await getLocationDetail(locationId)
+    // 장소에 위도/경도가 있으면 바로 날씨를 가져옵니다.
+    if (location.value?.latitude && location.value?.longitude) {
+      fetchWeather(location.value.latitude, location.value.longitude)
+      return
+    }
+    // 위/경도가 없지만 주소가 있으면 지오코딩으로 좌표를 얻어 날씨를 가져옵니다.
+    if (location.value?.address) {
+      try {
+        const g = await geocodeAddress(location.value.address)
+        if (g) {
+          fetchWeather(g.latitude, g.longitude)
+        }
+      } catch (e) {
+        // 지오코딩 실패는 무시하고 날씨 영역에 에러 표시
+        weatherError.value = '주소 기반 위치를 확인하지 못했습니다.'
+      }
+    }
   } catch (e) {
     loadError.value =
       e.code === 'LOCATION_NOT_FOUND'
@@ -90,8 +112,79 @@ function changePage(p) {
 async function loadPage() {
   isLoading.value = true
   loadError.value = ''
-  await Promise.all([fetchLocation(), fetchReviews()])
+  // 위치를 먼저 가져온 뒤 리뷰와 날씨를 병렬로 로드합니다.
+  await fetchLocation()
+  await Promise.all([fetchReviews()])
   isLoading.value = false
+}
+
+async function fetchWeather() {
+  // 함수 호출 시 좌표 전달 가능 (fetchWeather(lat, lon)).
+  const latArg = arguments.length > 0 ? arguments[0] : null
+  const lonArg = arguments.length > 1 ? arguments[1] : null
+  const lat = latArg ?? location.value?.latitude
+  const lon = lonArg ?? location.value?.longitude
+  if (!lat || !lon) return
+  weatherLoading.value = true
+  weatherError.value = ''
+  weather.value = null
+  try {
+    const latEnc = encodeURIComponent(lat)
+    const lonEnc = encodeURIComponent(lon)
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latEnc}&longitude=${lonEnc}&current_weather=true&timezone=Asia%2FSeoul`
+    const res = await fetch(url)
+    if (!res.ok) throw new Error('HTTP ' + res.status)
+    const data = await res.json()
+    // Open-Meteo의 current_weather를 그대로 저장
+    weather.value = data.current_weather || null
+  } catch (e) {
+    weatherError.value = '날씨 정보를 불러오지 못했습니다.'
+  } finally {
+    weatherLoading.value = false
+  }
+}
+
+async function geocodeAddress(address) {
+  if (!address) return null
+  try {
+    const q = encodeURIComponent(address)
+    // Open-Meteo geocoding API — API 키 불필요
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${q}&count=1&language=ko`
+    const res = await fetch(url)
+    if (!res.ok) throw new Error('HTTP ' + res.status)
+    const data = await res.json()
+    const first = data.results && data.results.length ? data.results[0] : null
+    if (!first) return null
+    return { latitude: first.latitude, longitude: first.longitude }
+  } catch (e) {
+    return null
+  }
+}
+
+function formatDateTime(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(
+    d.getHours()
+  )}:${pad(d.getMinutes())}`
+}
+
+function getWeatherIcon(code) {
+  // Open-Meteo weathercode 매핑 (대략적인 아이콘)
+  const c = Number(code)
+  if (c === 0) return '☀️'
+  if (c === 1 || c === 2) return '🌤️'
+  if (c === 3) return '☁️'
+  if (c === 45 || c === 48) return '🌫️'
+  if ([51, 53, 55, 80, 81, 82].includes(c)) return '🌦️'
+  if ([61, 63, 65].includes(c)) return '🌧️'
+  if ([66, 67].includes(c)) return '🧊🌧️'
+  if ([71, 73, 75, 85, 86].includes(c)) return '🌨️'
+  if (c === 77) return '❄️'
+  if (c === 95) return '⛈️'
+  if (c === 96 || c === 99) return '🌩️'
+  return '☁️'
 }
 
 // ---------- 리뷰 작성 ----------
@@ -317,6 +410,22 @@ onMounted(loadPage)
               </div>
             </div>
             <p class="detail-desc">{{ location.description }}</p>
+          
+            <!-- 날씨 정보 -->
+                    <div class="weather-box" v-if="weather">
+                      <div class="weather-main">
+                        <div class="weather-icon" :title="weather.weathercode">
+                          {{ getWeatherIcon(weather.weathercode) }}
+                        </div>
+                        <div class="weather-info">
+                          <div class="weather-temp">{{ weather.temperature }}°C</div>
+                          <div class="weather-desc">풍속 {{ weather.windspeed }} m/s · 방향 {{ weather.winddirection }}°</div>
+                        </div>
+                      </div>
+                      <div class="weather-meta">갱신: {{ formatDateTime(weather.time) }}</div>
+                    </div>
+            <p v-else-if="weatherLoading" class="weather-loading">날씨 정보를 불러오는 중…</p>
+            <p v-else-if="weatherError" class="weather-error">{{ weatherError }}</p>
           </div>
 
           <!-- 평점 요약 + 분포 -->
@@ -996,5 +1105,55 @@ onMounted(loadPage)
   color: var(--error);
   font-size: 13px;
   margin: 8px 0 0;
+}
+
+/* ===== 날씨 카드 ===== */
+.weather-box {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(90deg, #f3f7ff, #ffffff);
+  border: 1px solid var(--outline-variant);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.weather-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.weather-icon {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.03);
+  flex-shrink: 0;
+}
+.weather-info {
+  display: flex;
+  flex-direction: column;
+}
+.weather-temp {
+  font-size: 20px;
+  font-weight: 700;
+}
+.weather-desc {
+  color: var(--on-surface-variant);
+  font-size: 13px;
+}
+.weather-meta {
+  color: var(--outline);
+  font-size: 12px;
+}
+.weather-loading,
+.weather-error {
+  margin-top: 8px;
+  color: var(--outline);
+  font-size: 13px;
 }
 </style>
