@@ -243,9 +243,9 @@ function goPage(page) {
               >
                 <div class="card-left">
                   <div class="card-number">{{ rowNumber(index) }}</div>
-                  <span class="pill small">{{ place.category }}</span>
                 </div>
                 <div class="card-main">
+                  <span class="pill small">{{ place.category }}</span>
                   <div class="card-title">{{ place.name }}</div>
                   <div class="card-address">{{ place.address }}</div>
                 </div>
@@ -735,6 +735,11 @@ tbody tr:hover {
   flex: 1;
   min-width: 0;
   margin-right: 12px;
+}
+
+.card-main .pill.small {
+  display: inline-block;
+  margin-bottom: 6px;
 }
 
 .card-title {
