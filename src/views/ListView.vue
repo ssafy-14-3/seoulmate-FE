@@ -194,44 +194,70 @@ function goPage(page) {
             <img :src="place.image" :alt="place.name" class="feature-card-image" />
           </div>
         </aside>
-
         <div class="table-panel">
-          <div class="table-wrapper">
-            <p v-if="isLoading" class="table-state">목록을 불러오는 중입니다...</p>
-            <p v-else-if="errorMessage" class="table-state error">{{ errorMessage }}</p>
-            <p v-else-if="places.length === 0" class="table-state">표시할 장소가 없습니다.</p>
-            <table v-else>
-              <thead>
-                <tr>
-                  <th>번호</th>
-                  <th>카테고리</th>
-                  <th>장소명</th>
-                  <th>주소</th>
-                  <th>평균별점</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="(place, index) in pagedPlaces"
-                  :key="place.id"
-                  @click="goDetail(place.id)"
-                >
-                  <td>{{ rowNumber(index) }}</td>
-                  <td>
-                    <span class="pill">{{ place.category }}</span>
-                  </td>
-                  <td class="name-cell">{{ place.name }}</td>
-                  <td>{{ place.address }}</td>
-                  <td>
-                    <span class="rating">
-                      <span class="material-symbols-outlined">star</span>
-                      {{ place.rating.toFixed(1) }}
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <p v-if="isLoading" class="table-state">목록을 불러오는 중입니다...</p>
+          <p v-else-if="errorMessage" class="table-state error">{{ errorMessage }}</p>
+          <p v-else-if="places.length === 0" class="table-state">표시할 장소가 없습니다.</p>
+
+          <template v-else>
+            <div class="table-wrapper pc-only">
+              <table>
+                <thead>
+                  <tr>
+                    <th>번호</th>
+                    <th>카테고리</th>
+                    <th>장소명</th>
+                    <th>주소</th>
+                    <th>평균별점</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(place, index) in pagedPlaces"
+                    :key="place.id"
+                    @click="goDetail(place.id)"
+                  >
+                    <td>{{ rowNumber(index) }}</td>
+                    <td>
+                      <span class="pill">{{ place.category }}</span>
+                    </td>
+                    <td class="name-cell">{{ place.name }}</td>
+                    <td>{{ place.address }}</td>
+                    <td>
+                      <span class="rating">
+                        <span class="material-symbols-outlined">star</span>
+                        {{ place.rating.toFixed(1) }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="list-cards mobile-only">
+              <article
+                v-for="(place, index) in pagedPlaces"
+                :key="place.id"
+                class="list-card"
+                @click="goDetail(place.id)"
+              >
+                <div class="card-left">
+                  <div class="card-number">{{ rowNumber(index) }}</div>
+                  <span class="pill small">{{ place.category }}</span>
+                </div>
+                <div class="card-main">
+                  <div class="card-title">{{ place.name }}</div>
+                  <div class="card-address">{{ place.address }}</div>
+                </div>
+                <div class="card-right">
+                  <div class="card-rating">
+                    <span class="material-symbols-outlined">star</span>
+                    {{ place.rating.toFixed(1) }}
+                  </div>
+                </div>
+              </article>
+            </div>
+          </template>
 
           <div class="pagination">
             <button type="button" :disabled="currentPage === 1" @click="goPage(currentPage - 1)">
@@ -644,5 +670,105 @@ tbody tr:hover {
     font-size: 14px;
   }
   .search-icon { display: none; }
+}
+
+/* ===== 모바일 <-> PC 분기 필터 ===== */
+.mobile-only {
+  display: none !important;
+}
+
+@media (max-width: 767px) {
+  .pc-only {
+    display: none !important;
+  }
+  .mobile-only {
+    display: flex !important;
+  }
+}
+
+/* ===== 모바일 카드 목록 레이아웃 ===== */
+.list-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+.list-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid rgba(37, 99, 235, 0.08);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.02);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.list-card:active {
+  transform: scale(0.98);
+}
+
+.card-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-right: 14px;
+  flex-shrink: 0;
+}
+
+.card-number {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #2563eb;
+}
+
+.pill.small {
+  padding: 2px 8px;
+  font-size: 0.75rem;
+}
+
+.card-main {
+  flex: 1;
+  min-width: 0;
+  margin-right: 12px;
+}
+
+.card-title {
+  font-weight: 700;
+  color: #111827;
+  font-size: 1rem;
+  margin-bottom: 4px;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.card-address {
+  font-size: 0.8rem;
+  color: #64748b;
+  line-height: 1.4;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.card-right {
+  flex-shrink: 0;
+}
+
+.card-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  color: #2563eb;
+  font-size: 0.9rem;
+}
+
+.card-rating .material-symbols-outlined {
+  color: #f59e0b;
+  font-size: 18px;
 }
 </style>
