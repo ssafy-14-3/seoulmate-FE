@@ -412,20 +412,37 @@ onMounted(loadPage)
             <p class="detail-desc">{{ location.description }}</p>
           
             <!-- 날씨 정보 -->
-                    <div class="weather-box" v-if="weather">
-                      <div class="weather-main">
-                        <div class="weather-icon" :title="weather.weathercode">
-                          {{ getWeatherIcon(weather.weathercode) }}
-                        </div>
-                        <div class="weather-info">
-                          <div class="weather-temp">{{ weather.temperature }}°C</div>
-                          <div class="weather-desc">풍속 {{ weather.windspeed }} m/s · 방향 {{ weather.winddirection }}°</div>
-                        </div>
-                      </div>
-                      <div class="weather-meta">갱신: {{ formatDateTime(weather.time) }}</div>
-                    </div>
-            <p v-else-if="weatherLoading" class="weather-loading">날씨 정보를 불러오는 중…</p>
-            <p v-else-if="weatherError" class="weather-error">{{ weatherError }}</p>
+            <div class="weather-wrapper">
+              <div class="weather-box" v-if="weather">
+                <div class="weather-main">
+                  <div class="weather-icon" :title="weather.weathercode">
+                    {{ getWeatherIcon(weather.weathercode) }}
+                  </div>
+                  <div class="weather-info">
+                    <div class="weather-temp">{{ weather.temperature }}°C</div>
+                    <div class="weather-desc">풍속 {{ weather.windspeed }} m/s · 방향 {{ weather.winddirection }}°</div>
+                  </div>
+                </div>
+                <div class="weather-meta">갱신: {{ formatDateTime(weather.time) }}</div>
+              </div>
+
+              <div
+                v-else-if="weatherLoading || (!weather && !weatherError)"
+                class="weather-skeleton"
+                aria-hidden="true"
+              >
+                <div class="skeleton-icon-col">
+                  <div class="skeleton-icon shimmer"></div>
+                  <div class="skeleton-line skeleton-line-meta shimmer meta-under-icon"></div>
+                </div>
+                <div class="skeleton-lines">
+                  <div class="skeleton-line skeleton-line-lg shimmer"></div>
+                  <div class="skeleton-line skeleton-line-sm shimmer"></div>
+                </div>
+              </div>
+
+              <p v-if="weatherError" class="weather-error">{{ weatherError }}</p>
+            </div>
           </div>
 
           <!-- 평점 요약 + 분포 -->
@@ -1118,6 +1135,10 @@ onMounted(loadPage)
   flex-direction: column;
   gap: 6px;
 }
+.weather-wrapper {
+  margin-top: 12px;
+  min-height: 88px;
+}
 .weather-main {
   display: flex;
   align-items: center;
@@ -1155,5 +1176,82 @@ onMounted(loadPage)
   margin-top: 8px;
   color: var(--outline);
   font-size: 13px;
+}
+
+/* ===== 스켈레톤 (shimmer) ===== */
+.weather-skeleton {
+  margin-top: 12px;
+  /* match .weather-box visual */
+  padding: 12px 16px;
+  background: linear-gradient(90deg, #f3f7ff, #ffffff);
+  border: 1px solid var(--outline-variant);
+  border-radius: 8px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  box-sizing: border-box;
+}
+/* ensure skeleton vertical size matches real card */
+.weather-skeleton {
+  min-height: 88px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+.skeleton-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  background: #e9edf6;
+  flex-shrink: 0;
+}
+.skeleton-lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.skeleton-line {
+  height: 14px;
+  border-radius: 6px;
+  background: #eceff6;
+}
+.skeleton-line-lg {
+  width: 48%;
+  height: 18px;
+}
+.skeleton-line-sm {
+  width: 36%;
+  height: 14px;
+}
+.skeleton-line-meta {
+  width: 28%;
+  height: 12px;
+  border-radius: 6px;
+}
+
+.skeleton-icon-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  width: 56px;
+  flex-shrink: 0;
+}
+.meta-under-icon {
+  width: 36px;
+  height: 12px;
+}
+.shimmer {
+  background: linear-gradient(90deg, #eceff6 0%, #f7f9ff 50%, #eceff6 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s linear infinite;
+}
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 </style>
