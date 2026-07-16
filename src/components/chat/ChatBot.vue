@@ -6,6 +6,7 @@ const widgetRef = ref(null)
 const bodyRef = ref(null)
 const isLoading = ref(false)
 const isOpen = ref(false)
+const isMobile = ref(false)
 const input = ref('')
 const messages = ref([
   {
@@ -29,14 +30,35 @@ const toggleChat = () => {
   isOpen.value = !isOpen.value
 }
 
+let _mq = null
+const handleMqChange = () => {
+  _mq = _mq || window.matchMedia('(max-width: 768px)')
+  isMobile.value = _mq.matches
+}
+
 const onDocumentClick = (e) => {
   if (isOpen.value && widgetRef.value && !e.composedPath().includes(widgetRef.value)) {
     isOpen.value = false
   }
 }
 
-onMounted(() => document.addEventListener('click', onDocumentClick))
-onUnmounted(() => document.removeEventListener('click', onDocumentClick))
+onMounted(() => {
+  document.addEventListener('click', onDocumentClick)
+  _mq = window.matchMedia('(max-width: 768px)')
+  isMobile.value = _mq.matches
+  if (_mq.addEventListener) _mq.addEventListener('change', handleMqChange)
+  else _mq.addListener(handleMqChange)
+  window.addEventListener('resize', handleMqChange)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', onDocumentClick)
+  if (_mq) {
+    if (_mq.removeEventListener) _mq.removeEventListener('change', handleMqChange)
+    else _mq.removeListener(handleMqChange)
+  }
+  window.removeEventListener('resize', handleMqChange)
+})
 
 const sendMessage = async () => {
   const text = input.value.trim()
@@ -87,7 +109,7 @@ const sendMessage = async () => {
     <Transition name="panel">
       <div
         v-if="isOpen"
-        class="chat-panel"
+        :class="['chat-panel', { 'chat-panel--mobile': isMobile }]"
         role="dialog"
         aria-modal="true"
         aria-label="챗봇 대화창"
@@ -123,13 +145,14 @@ const sendMessage = async () => {
     </Transition>
 
     <button
+      v-if="!(isMobile && isOpen)"
       class="chat-fab"
       type="button"
       @click="toggleChat"
       :aria-expanded="isOpen"
       aria-label="챗봇 열기"
     >
-      <span v-if="!isOpen">💬</span>
+      ㄱ<span v-if="!isOpen">💬</span>
       <span v-else>✕</span>
     </button>
   </div>
@@ -207,6 +230,29 @@ const sendMessage = async () => {
   height: 320px;
   overflow-y: auto;
   background: var(--color-surface);
+}
+
+/* Mobile: make chat panel fullscreen */
+.chat-panel--mobile {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100vh;
+  border-radius: 0;
+  margin: 0;
+  border: none;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-panel--mobile .chat-panel__body {
+  height: auto;
+  flex: 1 1 auto;
+  overflow-y: auto;
 }
 
 .bubble {
