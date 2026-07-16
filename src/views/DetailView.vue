@@ -11,6 +11,7 @@ import {
   checkReviewPassword,
 } from '../../api/index.js'
 import StatusLottie from '@/components/StatusLottie.vue'
+import { shareLocationToKakao, buildShareUrl } from '@/kakaoShare.js'
 
 const route = useRoute()
 const locationId = route.params.id
@@ -71,19 +72,18 @@ async function fetchLocation() {
 
 async function fetchReviews() {
   try {
-    const base = import.meta.env.VITE_API_BASE_URL || 'https://seoulmate-be.onrender.com'
-    const url = new URL(`${base}/api/locations/${locationId}/reviews`)
-    url.searchParams.set('page', String(page.value))
-    url.searchParams.set('size', String(size))
-
-    const res = await fetch(url.toString(), { headers: { 'Content-Type': 'application/json' } })
-    if (!res.ok) return
-    const data = await res.json()
+    const data = await getReviewList(locationId, { page: page.value, size })
     reviews.value = data.items || []
     reviewTotal.value = data.total || 0
   } catch (e) {
     /* 목록 로드 실패 시 빈 상태 유지 */
   }
+}
+
+function changePage(p) {
+  if (p < 1 || p > totalPages.value || p === page.value) return
+  page.value = p
+  fetchReviews()
 }
 
 /** 최초 진입/재시도 시 전체 로드 (로딩 Lottie 표시) */
@@ -97,7 +97,10 @@ async function loadPage() {
 // ---------- 리뷰 작성 ----------
 function openWriteModal() {
   // 이동하여 작성 페이지에서 장소가 자동 선택되도록 쿼리 전달
-  router.push({ path: '/review/write', query: { location_id: String(locationId), name: location.value?.name || '' } })
+  router.push({
+    path: '/review/write',
+    query: { location_id: String(locationId), name: location.value?.name || '' },
+  })
 }
 
 // ---------- 수정/삭제: 비밀번호 확인 → 실행 ----------
@@ -152,7 +155,11 @@ async function confirmPassword() {
       const target = reviews.value.find((r) => r.id === passwordModal.reviewId)
       const payload = {
         reviewId: passwordModal.reviewId,
-        selectedPlace: { id: Number(locationId), name: location.value?.name, category: location.value?.category },
+        selectedPlace: {
+          id: Number(locationId),
+          name: location.value?.name,
+          category: location.value?.category,
+        },
         title: target?.title ?? '',
         content: target?.content ?? '',
         rating: target?.rating ?? 5,
@@ -227,6 +234,28 @@ function closeFormModal() {
   formModal.error = ''
 }
 
+// ---------- 공유 ----------
+const copied = ref(false)
+
+function shareKakao() {
+  try {
+    shareLocationToKakao(location.value)
+  } catch (e) {
+    alert(e.message)
+  }
+}
+
+async function copyLink() {
+  try {
+    // 카카오 공유와 동일하게 배포 주소 기준 링크 복사 (로컬에서도 localhost가 아닌 서비스 링크)
+    await navigator.clipboard.writeText(buildShareUrl())
+    copied.value = true
+    setTimeout(() => (copied.value = false), 2000)
+  } catch {
+    alert('링크 복사에 실패했습니다.')
+  }
+}
+
 // ---------- 유틸 ----------
 function formatDate(iso) {
   if (!iso) return ''
@@ -276,7 +305,17 @@ onMounted(loadPage)
                 {{ location.address }}
               </span>
             </div>
-            <h1 class="detail-title">{{ location.name }}</h1>
+            <div class="title-row">
+              <h1 class="detail-title">{{ location.name }}</h1>
+              <div class="share-actions">
+                <button class="btn btn-kakao" @click="shareKakao" aria-label="카카오톡으로 공유">
+                  카카오 공유
+                </button>
+                <button class="btn btn-ghost" @click="copyLink" aria-label="링크 복사">
+                  {{ copied ? '복사됨 ✓' : '링크 복사' }}
+                </button>
+              </div>
+            </div>
             <p class="detail-desc">{{ location.description }}</p>
           </div>
 
@@ -569,6 +608,32 @@ onMounted(loadPage)
 .icon {
   width: 16px;
   height: 16px;
+}
+
+/* ===== 공유 버튼 ===== */
+.title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.share-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+/* 공유 영역 버튼은 알약형으로 통일 (리뷰 카드의 .btn-ghost에는 영향 없음) */
+.share-actions .btn {
+  border-radius: 999px;
+}
+.btn-kakao {
+  background: #fee500; /* 카카오 브랜드 컬러 (버튼 가이드) */
+  color: #191919;
+  padding: 4px 12px;
+}
+.btn-kakao:hover {
+  opacity: 0.85;
 }
 
 .detail-title {
