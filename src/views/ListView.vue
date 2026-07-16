@@ -347,9 +347,9 @@ function goPage(page) {
   background: #f8fbff;
   border: 1px solid #dbeafe;
 }
-
 .search-box input {
   flex: 1;
+  min-width: 0;
   border: 0;
   outline: none;
   background: transparent;
@@ -628,5 +628,21 @@ tbody tr:hover {
 .pagination button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .search-box {
+    padding: 8px;
+    gap: 8px;
+  }
+  .search-box input {
+    min-width: 0;
+    font-size: 14px;
+  }
+  .search-button {
+    padding: 6px 10px;
+    font-size: 14px;
+  }
+  .search-icon { display: none; }
 }
 </style>

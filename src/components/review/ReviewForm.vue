@@ -343,7 +343,7 @@ async function handleSubmit() {
   background: #f8fbff;
   border: 1px solid #dbeafe;
 }
-.search-box input { flex: 1; border: 0; outline: none; background: transparent; font: inherit; color: #111827; padding: 0; }
+.search-box input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font: inherit; color: #111827; padding: 0; }
 .search-icon { color: #64748b; }
 .search-button { border: 0; border-radius: 999px; padding: 8px 14px; background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; cursor: pointer; box-shadow: 0 8px 18px rgba(37, 99, 235, 0.2); }
 .pl-10 { padding-left: 40px; }
@@ -391,4 +391,20 @@ async function handleSubmit() {
 .location-item:last-child { border-bottom: 0; }
 .loc-main { flex: 1; cursor: pointer; }
 .loc-title { font-weight: 600; }
+
+@media (max-width: 480px) {
+  .search-box {
+    padding: 8px;
+    gap: 8px;
+  }
+  .search-box input {
+    min-width: 0;
+    font-size: 14px;
+  }
+  .search-button {
+    padding: 6px 10px;
+    font-size: 14px;
+  }
+  .search-icon { display: none; }
+}
 </style>
