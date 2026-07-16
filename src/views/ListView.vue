@@ -54,10 +54,11 @@ function mapLocationItem(item) {
 }
 
 watch(
-  () => route.query.category,
-  (category) => {
-    selectedCategory.value = category || '전체'
-    currentPage.value = 1
+  () => [route.query.category, route.query.q, route.query.page],
+  () => {
+    selectedCategory.value = route.query.category || '전체'
+    searchQuery.value = route.query.q || ''
+    currentPage.value = Number(route.query.page) || 1
     void loadPlaces()
   },
   { immediate: true },
@@ -117,16 +118,21 @@ const pageNumbers = computed(() => {
 function selectCategory(category) {
   if (selectedCategory.value === category) return // 동일 카테고리 재클릭 무시
 
-  // 쿼리 변경 → route.query.category watch가 상태 갱신 + loadPlaces 수행
-  if (category === '전체') {
-    router.replace({ path: '/list' })
-  } else {
-    router.replace({ path: '/list', query: { category } })
-  }
+  // 쿼리 변경 → route watcher가 상태 갱신 + loadPlaces 수행
+  const q = searchQuery.value.trim()
+  const query = {}
+  if (category && category !== '전체') query.category = category
+  if (q) query.q = q
+  router.replace({ path: '/list', query }).catch(() => {})
 }
 
 function onSearch() {
   currentPage.value = 1
+  const q = searchQuery.value.trim()
+  const query = {}
+  if (selectedCategory.value && selectedCategory.value !== '전체') query.category = selectedCategory.value
+  if (q) query.q = q
+  router.replace({ path: '/list', query }).catch(() => {})
   void loadPlaces()
 }
 
@@ -146,6 +152,12 @@ function goToReview(place) {
 function goPage(page) {
   if (page < 1 || page > totalPages.value) return
   currentPage.value = page
+  const q = searchQuery.value.trim()
+  const query = {}
+  if (selectedCategory.value && selectedCategory.value !== '전체') query.category = selectedCategory.value
+  if (q) query.q = q
+  if (page && page > 1) query.page = String(page)
+  router.replace({ path: '/list', query }).catch(() => {})
   void loadPlaces()
 }
 </script>
