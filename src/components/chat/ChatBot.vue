@@ -11,7 +11,9 @@ const messages = ref([
   {
     id: 1,
     role: 'bot',
-    content: '안녕하세요! 서울메이트 챗봇입니다. 무엇을 도와드릴까요?',
+    content:
+      '안녕하세요! 서울메이트 챗봇입니다.\n지역명과 카테고리(관광지 / 문화시설 / 축제·행사 / 여행코스 / 레포츠 / 숙박 / 쇼핑)를 함께 입력해주시면 더 정확하게 추천해드려요.\n예) "종로구 관광지 추천해줘"',
+    locations: [],
   },
 ])
 
@@ -65,7 +67,8 @@ const sendMessage = async () => {
     messages.value.push({
       id: Date.now() + 1,
       role: 'bot',
-      content: response?.reply || '죄송해요. 답변을 가져오지 못했어요.',    
+      content: response?.reply || '죄송해요. 답변을 가져오지 못했어요.',
+      locations: response?.recommended_locations || [],
     })
     scrollToBottom()
   } catch (error) {
@@ -102,13 +105,30 @@ const sendMessage = async () => {
           </button>
         </div>
 
-          <div class="chat-panel__body" ref="bodyRef">
+        <div class="chat-panel__body" ref="bodyRef">
           <div
             v-for="message in messages"
             :key="message.id"
             :class="['bubble', message.role === 'user' ? 'bubble--user' : 'bubble--bot']"
           >
-            {{ message.content }}
+            <p class="bubble__text">{{ message.content }}</p>
+
+            <div v-if="message.locations?.length" class="location-list">
+              <RouterLink
+                v-for="location in message.locations"
+                :key="location.id"
+                class="location-item"
+                :to="`/detail/${location.id}`"
+              >
+                <span class="location-item__name">{{ location.name }}</span>
+                <span class="location-item__meta">
+                  <span v-if="location.avg_rating" class="location-item__rating">
+                    ★ {{ location.avg_rating.toFixed(1) }}
+                  </span>
+                </span>
+                <span class="location-item__arrow" aria-hidden="true">›</span>
+              </RouterLink>
+            </div>
           </div>
           <div v-if="isLoading" class="bubble bubble--bot typing">
             <span></span><span></span><span></span>
@@ -229,6 +249,76 @@ const sendMessage = async () => {
   color: var(--color-on-primary);
 }
 
+.bubble__text {
+  white-space: pre-line;
+}
+
+.location-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.location-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-outline-variant);
+  text-decoration: none;
+  color: inherit;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.location-item:hover {
+  background: var(--color-surface-container-lowest);
+  border-color: var(--color-primary);
+}
+
+.location-item__name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.location-item__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.location-item__category {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--color-surface-container-lowest);
+  border: 1px solid var(--color-outline-variant);
+  color: var(--color-on-surface-variant, inherit);
+}
+
+.location-item__rating {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f59e0b;
+}
+
+.location-item__arrow {
+  flex-shrink: 0;
+  font-size: 16px;
+  line-height: 1;
+  opacity: 0.4;
+}
+
 .chat-panel__footer {
   display: flex;
   gap: 8px;
@@ -266,16 +356,27 @@ const sendMessage = async () => {
 
 .typing span {
   display: inline-block;
-  width: 6px; height: 6px;
+  width: 6px;
+  height: 6px;
   margin: 0 2px;
   border-radius: 50%;
   background: var(--color-outline-variant);
   animation: bounce 1.2s infinite;
 }
-.typing span:nth-child(2) { animation-delay: 0.2s; }
-.typing span:nth-child(3) { animation-delay: 0.4s; }
+.typing span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.typing span:nth-child(3) {
+  animation-delay: 0.4s;
+}
 @keyframes bounce {
-  0%, 60%, 100% { transform: translateY(0); }
-  30% { transform: translateY(-4px); }
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-4px);
+  }
 }
 </style>
