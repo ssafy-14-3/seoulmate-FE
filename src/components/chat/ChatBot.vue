@@ -152,7 +152,7 @@ const sendMessage = async () => {
       :aria-expanded="isOpen"
       aria-label="챗봇 열기"
     >
-      ㄱ<span v-if="!isOpen">💬</span>
+      <span v-if="!isOpen">💬</span>
       <span v-else>✕</span>
     </button>
   </div>
